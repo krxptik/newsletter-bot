@@ -11,7 +11,7 @@ def prune_articles(processed_articles, max_no):
         else:
             i += 1
 
-    # Limit to 20 articles
+    # Limit to 20 or 19 articles
     if len(processed_articles) > max_no:
         print("Too many articles retrieved. Pruning excess...")
         processed_articles.sort(

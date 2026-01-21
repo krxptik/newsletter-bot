@@ -4,7 +4,7 @@ from data.loader import load_feeds
 from sources.rss_parser import process_all_rss
 from sources.hybrid_parser import process_all_hybrid
 from sources.non_rss_parser import process_all_non_rss
-from sources.prune import prune_articles
+from utils.prune import prune_articles
 from ai.throttle import throttled_proc
 from cli.menu import menu
 import pyfiglet
