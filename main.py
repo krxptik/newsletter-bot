@@ -6,10 +6,9 @@ from sources.hybrid_parser import process_all_hybrid
 from sources.non_rss_parser import process_all_non_rss
 from sources.prune import prune_articles
 from ai.throttle import throttled_proc
-from tqdm import tqdm
-from datetime import datetime
-from google.genai.errors import ClientError
+from cli.menu import menu
 import pyfiglet
+import time
 
 rss_feeds, hybrid_feeds, non_rss_feeds = load_feeds()
 
@@ -37,7 +36,7 @@ processed_articles += process_all_non_rss(non_rss_feeds)
 
 # Prune used and excess articles (if any)
 print("Removing used articles...")
-processed_articles = prune_articles(processed_articles)
+processed_articles = prune_articles(processed_articles, 19)
 print(f"Fetched {len(processed_articles)} articles.")
 print()
 
@@ -46,3 +45,7 @@ print("Summarising and tagging articles...")
 throttled_proc(processed_articles)
 
 print("All articles fully processed and consolidated!")
+time.sleep(0.5)
+print("Preparing the selection menu...")
+time.sleep(3)
+selected_articles = menu(processed_articles)
