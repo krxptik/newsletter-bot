@@ -1,0 +1,16 @@
+{
+    "https://www.bbc.co.uk/future/tags/language/": {
+        "article_regex": "https:\\/\\/www\\.bbc\\.co.uk\\/future\\/article\\/\\d{8}.+",
+        "allow_regex_fallback": true
+    },
+    
+    "https://www.npr.org/sections/publiceditor/140681900/language-media-and-society": {
+        "article_regex": "https:\\/\\/www\\.npr\\.org\\/sections\\/publiceditor\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/\\d+\\/.+",
+        "allow_regex_fallback": true
+    },
+
+    "https://www.merriam-webster.com/wordplay": {
+        "article_regex": "https:\\/\\/www\\.merriam-webster\\.com\\/wordplay\\/.+",
+        "allow_regex_fallback": false
+    }
+}

@@ -1,0 +1,17 @@
+Below is a list of linguistics-related article summaries that will appear in a newsletter:
+
+%s
+
+Using the summaries as context, generate a **catchy newsletter title** and a **25-word introduction** that hooks readers. 
+The introduction should briefly summarize the summaries, be engaging and natural, but not sound artificial or robotic.
+
+**Instructions for output:**
+- Only output the following exact format, nothing else:
+  TITLE:
+  <title>
+
+  SUMMARY:
+  <25-word introduction>
+- The introduction must be exactly one paragraph with no newlines.
+- The title should be concise, clear, and newsletter-friendly.
+- Do not invent content beyond what is in the summaries.

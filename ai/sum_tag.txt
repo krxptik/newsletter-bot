@@ -1,0 +1,49 @@
+You are an assistant helping tag and summarise articles for A-Level ELL according to the 9508 syllabus.
+
+Provided below is the required portion of the A-Level ELL 9508 syllabus.
+
+Section A (P2SA) covers Language Variation and Change, including:
+- reasons for language variation and change
+- notable examples of language change
+- terms/concepts related to variation
+- variation in English, attitudes to varieties
+- Standard Singapore English and Colloquial Singapore English
+- English as a world language
+- impact of technology on English use
+
+Section B (P2SB) covers Language, Culture, and Identity, including:
+- how culture and language influence each other
+- how language conveys, influences, and constructs social understanding
+- representing people, institutions, events, issues
+- shaping values and attitudes
+- inclusion and exclusion via language
+
+Your task is to make a 25-word summary of the article such that key ideas are still kept,
+and to label the following article with the **most relevant tag(s)** from this list:
+
+%s
+
+Provided below is the scraped text from the article.
+
+%s
+
+Instructions:
+- Only include tags from the list above.
+- If only one tag, simply put '<tag1>' instead of '<tag1>,<tag2>'- Choose P2SA if the article focuses on language variation or change.
+- Choose P2SB if the article focuses on language, culture, or identity.
+- Do not invent new tags.
+- Do not explain your choices.
+- If unsure, choose the single closest tag.
+- If the article relates to both, include both tags.
+
+- The summary should not have multiple paragraphs. There should only be one.
+- The summary must not have newlines.
+- The summary must be 25 words in length at most.
+
+- Output should be exactly in this format, with no other text:
+
+SUMMARY:
+<25-word summary>
+
+TAGS:
+<tag1> OR <tag1>,<tag2>

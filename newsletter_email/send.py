@@ -18,26 +18,30 @@ BCC_EMAILS = [
     "meowdoublemrow@gmail.com"
 ]
 
-msg = EmailMessage()
-msg.set_content("Hello, this is a test email sent using Python's smtplib!") # Email body
-msg['Subject'] = "Test Email from Python"
-msg['From'] = SENDER_EMAIL
-msg['To'] = ", ".join(TO_EMAILS)
-msg['Cc'] = ", ".join(CC_EMAILS)
+def send_email(html: str):
+    msg = EmailMessage()
+    msg.set_content("This email contains HTML elements. If you are seeing this, the email is not loading properly. Please view this in a proper email client.")
 
-try:
-    # Create a secure SSL context
-    context = ssl.create_default_context()
+    # add edits to allow changing subject
+    msg.add_alternative(html, subtype='html')
+    msg['Subject'] = "Test Email from Python"
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = ", ".join(TO_EMAILS)
+    msg['Cc'] = ", ".join(CC_EMAILS)
 
-    # Connect to the server and log in
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        server.starttls(context=context)  # Secure the connection
-        server.login(SENDER_EMAIL, PASSWORD)
-        server.send_message(
-            msg, 
-            to_addrs=TO_EMAILS + CC_EMAILS + BCC_EMAILS
-        )
-    print("Email sent successfully!")
+    try:
+        # Create a secure SSL context
+        context = ssl.create_default_context()
 
-except smtplib.SMTPException as e:
-    print(f"Error: unable to send email. {e}")
+        # Connect to the server and log in
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls(context=context)  # Secure the connection
+            server.login(SENDER_EMAIL, PASSWORD)
+            server.send_message(
+                msg, 
+                to_addrs=TO_EMAILS + CC_EMAILS + BCC_EMAILS
+            )
+        print("Email sent successfully!")
+
+    except smtplib.SMTPException as e:
+        print(f"Error: unable to send email. {e}")

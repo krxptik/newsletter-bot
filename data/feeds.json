@@ -16,5 +16,16 @@
         "https://www.bbc.co.uk/future/tags/language/",
         "https://www.merriam-webster.com/wordplay",
         "https://www.npr.org/sections/publiceditor/140681900/language-media-and-society"
-    ]
+    ],
+
+    "source_names": {
+        "https://allthingslinguistic.com/rss": "All Things Linguistic",
+        "https://languagelog.ldc.upenn.edu/nll/?feed=rss2": "Language Log (UPenn)",
+        "https://stancarey.wordpress.com/category/linguistics/feed/": "Sentence First",
+        "https://theconversation.com/topics/linguistics-1841/articles.atom": "The Conversation",
+        "https://www.theguardian.com/science/language/rss": "The Guardian",
+        "https://www.bbc.co.uk/future/tags/language/": "BBC",
+        "https://www.merriam-webster.com/wordplay": "Merriam-Webster",
+        "https://www.npr.org/sections/publiceditor/140681900/language-media-and-society": "NPR"
+    }
 }
