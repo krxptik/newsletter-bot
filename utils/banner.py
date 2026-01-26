@@ -6,4 +6,4 @@ def banner():
     banner = pyfiglet.figlet_format(text)
     print(banner[:-1])
     print("=========================")
-    print("\nRunning v0.1.0.\n")
+    print("\nRunning v0.1.1.\n")
