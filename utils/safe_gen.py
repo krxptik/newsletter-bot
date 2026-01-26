@@ -2,7 +2,7 @@ from google.genai import errors
 from typing import Callable, Any
 import time
 
-def safe_generate(func: Callable[..., Any], *args: Any, retries: int = 3, wait: int = 5) -> Any:
+def safe_gen(func: Callable[..., Any], *args: Any, retries: int = 3, wait: int = 5) -> Any:
     """
     Safely execute an AI function call with retry logic on server errors.
 

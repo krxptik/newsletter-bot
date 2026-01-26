@@ -3,7 +3,7 @@ import time
 
 def safe_get(
         url: str, session: requests.Session, 
-        retries: int = 3, wait: int = 3) -> requests.Response | None:
+        retries: int = 3, wait: int = 3) -> (requests.Response | None):
     """
     Safely perform an HTTP GET request with retries and exponential backoff.
 
@@ -20,7 +20,7 @@ def safe_get(
         wait (int): Base wait time in seconds for exponential backoff.
 
     Returns:
-        requests.Response | None:
+        (requests.Response | None):
             The response object if the request succeeds, otherwise None
             if all retries fail or a non-recoverable error occurs.
     """

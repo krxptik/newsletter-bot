@@ -30,7 +30,8 @@ def scrape_content(article: Article, session: requests.Session) -> bool:
     article.text = text
     return True
 
-def parse_entry(entry, session: requests.Session) -> Article | None:
+
+def parse_entry(entry, session: requests.Session) -> (Article | None):
     """Parse a single Hybrid feed entry into an Article object.
 
     Args:
@@ -38,7 +39,7 @@ def parse_entry(entry, session: requests.Session) -> Article | None:
         session (requests.Session): Active requests session for connection reuse.
 
     Returns:
-        Article | None: Returns an Article object if the entry has valid title, 
+        (Article | None): Returns an Article object if the entry has valid title, 
         link, publication date. Returns None if any required field is missing.
     """
     title = entry.get('title')
@@ -55,6 +56,7 @@ def parse_entry(entry, session: requests.Session) -> Article | None:
         return None
 
     return article
+
 
 def process_hybrid(hybrid_feed_link: str, session: requests.Session) -> list[Article]:
     """Process a single Hybrid feed URL and return a list of Article objects.
@@ -82,6 +84,7 @@ def process_hybrid(hybrid_feed_link: str, session: requests.Session) -> list[Art
     add_source(articles, hybrid_feed_link)
     
     return articles
+
 
 def process_all_hybrid(hybrid_feeds: list[str], session: requests.Session) -> list[Article]:
     """Process a list of Hybrid feed URLs and return all recent articles.
