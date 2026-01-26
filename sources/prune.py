@@ -2,7 +2,7 @@ from data.loader import load_used_urls
 from datetime import datetime
 from models.article import Article
 
-def prune_articles(processed_articles: list[Article], max_no: int) -> list[Article]:
+def prune(processed_articles: list[Article], max_no: int) -> list[Article]:
     """Prunes used articles and limit number of articles to max_no.
     The limiting of articles is based on publish date or lack thereof.
 

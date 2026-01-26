@@ -1,5 +1,5 @@
 from ai.prompt import sum_tag_prompt
-from ai.safe_gen import safe_generate
+from utils.safe_gen import safe_gen
 from google.genai.errors import ClientError
 from tqdm import tqdm
 from models.article import Article
@@ -39,7 +39,7 @@ def throttle(processed_articles: list[Article], max_attempts: int = 5) -> bool:
         attempts = 0
         while attempts < max_attempts:
             try:
-                safe_generate(sum_tag_prompt, article)
+                safe_gen(sum_tag_prompt, article)
                 break
             except ClientError as e:
                 if handle_client_error(e):

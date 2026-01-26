@@ -6,15 +6,15 @@ from utils.add_source import add_source
 import feedparser
 import time
 
-def parse_entry(entry) -> Article | None:
+def parse_entry(entry: feedparser.FeedParserDict) -> (Article | None):
     """Parse a single RSS feed entry into an Article object.
 
     Args:
         entry (feedparser.FeedParserDict): A single entry from an RSS feed.
 
     Returns:
-        Article | None: Returns an Article object if the entry has valid title, 
-        link, publication date, and content. Returns None if any required field is missing.
+        (Article | None): Returns an Article object if the entry has valid title, 
+        link, publication date, and content. Returns None if any required field is missing
     """
     title = entry.get('title')
     link = entry.get('link')
@@ -79,7 +79,3 @@ def process_all_rss(rss_feeds: list) -> list[Article]:
         all_articles.extend(articles)
 
     return all_articles
-
-
-if __name__ == "__main__":
-    print(parse_entry.__doc__)

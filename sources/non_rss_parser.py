@@ -10,6 +10,7 @@ from tqdm import tqdm
 import requests
 import re
 
+
 NON_RSS_CONFIG = load_non_rss()
 DATE_PATTERNS = [
     [r'\d{1,2}(?:st|nd|rd|th) (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}', '%d %B %Y'],
@@ -17,9 +18,6 @@ DATE_PATTERNS = [
     [r'\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}', '%d %b %Y']
 ]
 
-def clean_ordinal_day(date_str):
-    # converts '5th January 2026' -> '5 January 2026'
-    return re.sub(r'(\d{1,2})(st|nd|rd|th)', r'\1', date_str)
 
 def extract_pub_date(tag, patterns, allow_fallback: bool = True):
     """Extract publication date from a BeautifulSoup tag using regex patterns.
@@ -49,9 +47,10 @@ def extract_pub_date(tag, patterns, allow_fallback: bool = True):
             return datetime.strptime(cleaned, pattern[1])
     return None
 
+
 def scrape_article(
         url: str, session: requests.Session, 
-        date_patterns, allow_fallback: bool) -> Article | None:
+        date_patterns, allow_fallback: bool) -> (Article | None):
     """Scrape a single article URL and return an Article object.
 
     Args:
@@ -61,7 +60,7 @@ def scrape_article(
         allow_fallback (bool): Whether to allow fallback date extraction.
 
     Returns:
-        Article | None: Article object if scraping succeeds, None otherwise.
+        (Article | None): Article object if scraping succeeds, None otherwise.
     """
     # --- Fetch article page ---
     response = safe_get(url, session)
@@ -85,6 +84,7 @@ def scrape_article(
     text = "\n".join(p.get_text(strip=True) for p in paragraphs)
     
     return Article(title.string, url, pub_date, text)
+
 
 def process_non_rss(non_rss_feed_link: str, session: requests.Session) -> list[Article]:
     """Process a single non-RSS feed and extract all article links.
@@ -139,6 +139,7 @@ def process_non_rss(non_rss_feed_link: str, session: requests.Session) -> list[A
     add_source(articles, non_rss_feed_link)
     
     return articles
+
 
 def process_all_non_rss(non_rss_feeds: list[str], session: requests.Session) -> list[Article]:
     """Process a list of non-RSS feed URLs and return all recent articles.
