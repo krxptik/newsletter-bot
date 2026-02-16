@@ -1,21 +1,17 @@
 import json
+from typing import List, Dict
 
-def load_feeds(path: str = "data/feeds.json") -> tuple[dict]:
+# ===== FEEDS.JSON FUNCTIONS =====
+def load_feeds(path: str = "data/feeds.json") -> List[Dict]:
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
+        return data
         
-        rss = data.get('rss_feeds', [])
-        hybrid = data.get('hybrid_feeds', [])
-        non_rss = data.get('non_rss_feeds', [])
+def save_feeds(feeds: List[Dict], path: str = "data/feeds.json") -> None:
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(feeds, f, indent=4)
 
-        return rss, hybrid, non_rss
-    
-def load_sources(path: str = "data/feeds.json") -> dict:
-    with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-        source_names = data.get('source_names', {})
-        return source_names
-    
+# ===== URLS.JSON FUNCTIONS =====
 def load_used_urls(path: str = "data/urls.json") -> set[str]:
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -26,10 +22,10 @@ def save_used_urls(urls: list[str], path="data/urls.json") -> None:
         json.dump(
             {'used_urls': list(urls)},
             f,
-            indent=2
+            indent=4
         )
 
-def load_non_rss(path="data/non_rss.json") -> dict:
-    with open(path, 'r', encoding="utf-8") as f:
-        data = json.load(f)
-        return data
+# ===== TESTING =====
+if __name__ == "__main__":
+    print(load_feeds())
+    save_feeds(load_feeds())
