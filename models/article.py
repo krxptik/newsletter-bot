@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import html
 
 class Article:
-    def __init__(self, title, link, pub_date, text=None, summary=None, tags=None, source=None):
+    def __init__(self, title, link, pub_date, text=None, source=None, summary=None, tags=None, ):
         self.title = title
         self.link = link
         self.pub_date = pub_date

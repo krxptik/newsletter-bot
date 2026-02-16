@@ -2,16 +2,12 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from datetime import datetime
 from models.article import Article
-from data.loader import load_non_rss
 from utils.datefuncs import clean_ordinal_day
 from utils.safe_request import safe_get
-from utils.add_source import add_source
-from tqdm import tqdm
 import requests
 import re
 
 
-NON_RSS_CONFIG = load_non_rss()
 DATE_PATTERNS = [
     [r'\d{1,2}(?:st|nd|rd|th) (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}', '%d %B %Y'],
     [r'(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}', '%B %d, %Y'],
@@ -20,16 +16,7 @@ DATE_PATTERNS = [
 
 
 def extract_pub_date(tag, patterns, allow_fallback: bool = True):
-    """Extract publication date from a BeautifulSoup tag using regex patterns.
-
-    Args:
-        tag: BeautifulSoup tag to search for date information.
-        patterns: List of [regex_pattern, strptime_format] pairs.
-        allow_fallback (bool): If True, search entire tag text when div not found.
-
-    Returns:
-        datetime | None: Parsed publication date or None if not found.
-    """
+    """Extract publication date from a BeautifulSoup tag using regex patterns."""
     # --- Check for dedicated date div ---
     date_div = tag.find('div', class_="published_at")
     if date_div:
@@ -50,18 +37,9 @@ def extract_pub_date(tag, patterns, allow_fallback: bool = True):
 
 def scrape_article(
         url: str, session: requests.Session, 
-        date_patterns, allow_fallback: bool) -> (Article | None):
-    """Scrape a single article URL and return an Article object.
-
-    Args:
-        url (str): The article URL to scrape.
-        session (requests.Session): Active requests session for connection reuse.
-        date_patterns: List of regex patterns for date extraction.
-        allow_fallback (bool): Whether to allow fallback date extraction.
-
-    Returns:
-        (Article | None): Article object if scraping succeeds, None otherwise.
-    """
+        date_patterns, allow_fallback: bool,
+        nrss_obj: dict) -> (Article | None):
+    """Scrape a single article URL and return an Article object."""
     # --- Fetch article page ---
     response = safe_get(url, session)
     if response is None:
@@ -83,32 +61,16 @@ def scrape_article(
     paragraphs = article_tag.find_all('p')
     text = "\n".join(p.get_text(strip=True) for p in paragraphs)
     
-    return Article(title.string, url, pub_date, text)
+    return Article(title.string, url, pub_date, text, nrss_obj['name'])
 
 
-def process_non_rss(non_rss_feed_link: str, session: requests.Session) -> list[Article]:
-    """Process a single non-RSS feed and extract all article links.
-
-    Args:
-        non_rss_feed_link (str): URL of the non-RSS feed to process.
-        session (requests.Session): Active requests session for connection reuse.
-
-    Returns:
-        list[Article]: List of Article objects extracted from the feed.
-    """
-    # --- Non-RSS feed pre-processing ---
-    feed_var = NON_RSS_CONFIG.get(non_rss_feed_link)
-    if not feed_var:
-        return []
-     
-    REF_URL = feed_var["article_regex"]
-    REGEX_FALLBACK = feed_var["allow_regex_fallback"]
-
+def process_non_rss(nrss_obj: dict, session: requests.Session) -> list[Article]:
+    """Process a single non-RSS feed and extract all article links."""
     # --- Fetch feed page ---
-    parsed_url = urlparse(non_rss_feed_link)
+    parsed_url = urlparse(nrss_obj['url'])
     domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-    response = safe_get(non_rss_feed_link, session)
+    response = safe_get(nrss_obj['url'], session)
     if response is None:
         return []
 
@@ -123,7 +85,7 @@ def process_non_rss(non_rss_feed_link: str, session: requests.Session) -> list[A
             continue
         
         full_url = urljoin(domain, href)
-        if re.match(REF_URL, full_url):
+        if re.match(nrss_obj['article_regex'], full_url):
             article_link_list.append(full_url)
 
     article_link_list = list(set(article_link_list))
@@ -132,31 +94,8 @@ def process_non_rss(non_rss_feed_link: str, session: requests.Session) -> list[A
     articles = [
         article
         for link in article_link_list
-        if (article := scrape_article(link, session, DATE_PATTERNS, REGEX_FALLBACK)) is not None
+        if (article := scrape_article(link, session, DATE_PATTERNS, nrss_obj['allow_regex_fallback'], nrss_obj)) is not None
         and article.is_recent()
     ]
-
-    add_source(articles, non_rss_feed_link)
     
     return articles
-
-
-def process_all_non_rss(non_rss_feeds: list[str], session: requests.Session) -> list[Article]:
-    """Process a list of non-RSS feed URLs and return all recent articles.
-
-    Args:
-        non_rss_feeds (list[str]): A list of non-RSS feed URLs to process.
-        session (requests.Session): Active requests session for connection reuse.
-
-    Returns:
-        list[Article]: A combined list of Article objects from all feeds.
-    """
-
-    with requests.Session() as session:
-        all_articles = []
-
-        for feed in tqdm(non_rss_feeds, desc="Processing non-RSS feeds"):
-            articles = process_non_rss(feed, session)
-            all_articles.extend(articles)
-
-        return all_articles
