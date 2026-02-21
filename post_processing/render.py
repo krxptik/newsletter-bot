@@ -1,9 +1,10 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from datetime import datetime
+from config import TEMPLATES_DIR, OUTPUT_DIR
 
 def render_newsletter(context):
     env = Environment(
-        loader=FileSystemLoader("newsletter_email/templates"),
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(['html', 'xml'])
     )
 
@@ -15,7 +16,7 @@ def render_newsletter(context):
 def save_newsletter(html: str, title: str):
     date = datetime.now().strftime('%d%m%Y')
     filename = date + '_' + title.lower().replace(' ', '_')
-    path = 'newsletter/' + filename
+    path = OUTPUT_DIR / filename
 
     with open(path, 'w') as f:
         f.write(html)

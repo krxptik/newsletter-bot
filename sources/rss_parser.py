@@ -3,6 +3,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import feedparser
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 def parse_entry(entry: feedparser.FeedParserDict, rss_obj: dict) -> (Article | None):
     """Parse a single RSS feed entry into an Article object."""
@@ -27,17 +29,22 @@ def parse_entry(entry: feedparser.FeedParserDict, rss_obj: dict) -> (Article | N
 
 def process_rss(rss_obj: dict) -> list[Article]:
     """Process a single RSS feed URL and return a list of Article objects."""
+    logger.debug(f"Fetching RSS feed: {rss_obj['url']}")
+    
     try:
         rss_feed = feedparser.parse(rss_obj['url'])
+        logger.debug(f"Feed parsed, {len(rss_feed.entries)} entries found")
     except Exception as e:
-        print(f"Failed to parse {rss_obj['url']}: {e}")
+        logger.error(f"Failed to parse {rss_obj['url']}: {e}")
         return []
     
-    articles = [
-        article
-        for entry in rss_feed.entries
-        if (article := parse_entry(entry, rss_obj)) is not None
-        and article.is_recent()
-    ]
-
+    articles = []
+    for entry in rss_feed.entries:
+        article = parse_entry(entry, rss_obj)
+        if article and article.is_recent():
+            articles.append(article)
+        elif article:
+            logger.debug(f"Skipping old article: {entry.get('title', 'Unknown')[:50]}")
+    
+    logger.info(f"RSS feed '{rss_obj['name']}': {len(articles)} recent articles")
     return articles

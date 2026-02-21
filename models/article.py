@@ -1,42 +1,29 @@
 from datetime import datetime, timedelta
+from typing import Optional, List
+from dataclasses import dataclass
 import html
 
+@dataclass
 class Article:
-    def __init__(self, title, link, pub_date, text=None, source=None, summary=None, tags=None, ):
-        self.title = title
-        self.link = link
-        self.pub_date = pub_date
-        self.text = text
-        self.summary = summary
-        self.tags = tags
-        self.source = source
+    title: str
+    link: str
+    pub_date: datetime
+    text: Optional[str] = None
+    source: Optional[str] = None
+    summary: Optional[str] = None
+    tags: Optional[List[str]] = None
 
-    # ---- title ----
-    @property
-    def title(self):
-        return self._title
+    def __post_init__(self):
+        # Unescape text
+        self.title = html.unescape(self.title) if self.title else self.title
+        self.text = html.unescape(self.text) if self.text else self.text
+        self.summary = html.unescape(self.summary) if self.summary else self.summary
 
-    @title.setter
-    def title(self, value):
-        self._title = html.unescape(value) if value else value
-
-    # ---- text ----
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, value):
-        self._text = html.unescape(value) if value else value
-
-    # ---- summary ----
-    @property
-    def summary(self):
-        return self._summary
-
-    @summary.setter
-    def summary(self, value):
-        self._summary = html.unescape(value) if value else value
+        # Validation
+        if not self.title or not self.title.strip():
+            raise ValueError("Title cannot be empty")
+        if not self.link.startswith(('http://', 'https://')):
+            raise ValueError(f"Invalid URL: {self.link}")
 
     def to_dict(self):
         return {

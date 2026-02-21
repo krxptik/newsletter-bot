@@ -13,3 +13,9 @@ __pycache__/
 .vscode/
 
 misc/
+
+# Ignore everything inside logs
+logs/*
+
+# But keep the directory itself (via a placeholder file)
+!logs/.gitkeep
