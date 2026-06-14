@@ -73,7 +73,7 @@ def main():
 
         # --- Newsletter generation ---
         display_banner_figlet("ellie!")
-        print("\nRunning v0.1.1.\n")
+        print(f"\nRunning {__version__}.\n")
         logger.info("Generating newsletter title and summary...")
         title, summary = run_with_spinner(
             "Generating newsletter...",
