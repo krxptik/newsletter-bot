@@ -1,8 +1,12 @@
 import logging
+import threading
 from datetime import date
+
 from config import RUNTIME_DIR
+
 from app.persistence.data_manager import load_file_data, overwrite_file_data
 
+_lock = threading.Lock()
 logger = logging.getLogger(__name__)
 
 AI_USAGE_FILE = RUNTIME_DIR / "ai_usage.json"
@@ -48,9 +52,10 @@ def retrieve_ai_usage(model: str) -> int:
 
 def increment_ai_usage(model: str) -> int:
     """Increment usage by 1 and return new count."""
-    data = _load_ai_usage()
-    entry = _get_or_create_entry(data, model)
-    entry["requests_used"] += 1
-    _save_ai_usage(data)
-    logger.info(f"Updated {model} usage to {entry['requests_used']}")
-    return entry["requests_used"]
+    with _lock:
+        data = _load_ai_usage()
+        entry = _get_or_create_entry(data, model)
+        entry["requests_used"] += 1
+        _save_ai_usage(data)
+        logger.info(f"Updated {model} usage to {entry['requests_used']}")
+        return entry["requests_used"]

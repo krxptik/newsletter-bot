@@ -1,16 +1,21 @@
+import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum, auto
+
+from tqdm import tqdm
+
 from config import AI_PROMPTS_DIR
 from models.article import Article
 from app.enrich.retry import safe_prompt
 from shared.ai_client import AIClient
 from shared.exceptions import InsufficientQuotaError
-from tqdm import tqdm
-import logging
 
 logger = logging.getLogger(__name__)
 
 ARTICLE_PROMPT_FILE = AI_PROMPTS_DIR / "article_prompt.txt"
 NEWSLETTER_REQUESTS = 1
+BATCH_SIZE = 5
 
 
 class EnrichResult(Enum):
@@ -81,25 +86,31 @@ def process_articles(
 ) -> list[Article]:
     logger.info(f"Processing {len(articles)} articles")
     successful = []
+    halt = threading.Event()  # shared flag to signal early stop
 
-    for article in tqdm(
-        articles, 
-        desc="AI Processing", 
-        unit="article",
-        bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]"
-    ):
+    def process_one(article: Article) -> tuple[Article, EnrichResult]:
+        if halt.is_set():
+            return (article, EnrichResult.SKIP)
         if client.remaining_requests() <= NEWSLETTER_REQUESTS:
-            logger.info("Stopping to reserve quota for newsletter")
-            break
-
+            halt.set()
+            return (article, EnrichResult.SKIP)
         result = _enrich_article(client, article, max_attempts)
-
         if result == EnrichResult.HALT:
-            logger.error("Halting article processing — quota exhausted")
-            raise InsufficientQuotaError("AI quota exhausted during article processing")
-        if result == EnrichResult.SUCCESS:
-            successful.append(article)
-        # SKIP → continue to next article
+            halt.set()
+        return (article, result)
+
+    with tqdm(total=len(articles), desc="AI Processing", unit="article",
+              bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]") as pbar:
+        with ThreadPoolExecutor(max_workers=BATCH_SIZE) as executor:
+            futures = {executor.submit(process_one, article): article for article in articles}
+            for future in as_completed(futures):
+                article, result = future.result()
+                pbar.update(1)
+                if result == EnrichResult.HALT:
+                    logger.error("Halting — quota exhausted")
+                    raise InsufficientQuotaError("AI quota exhausted during article processing")
+                if result == EnrichResult.SUCCESS:
+                    successful.append(article)
 
     logger.info(f"Processed {len(successful)} articles")
     return successful
