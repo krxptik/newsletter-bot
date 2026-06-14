@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Optional, List
 from dataclasses import dataclass
 import html
 
@@ -8,10 +7,10 @@ class Article:
     title: str
     link: str
     pub_date: datetime
-    text: Optional[str] = None
-    source: Optional[str] = None
-    summary: Optional[str] = None
-    tags: Optional[List[str]] = None
+    text: str | None = None
+    source: str | None = None
+    summary: str | None = None
+    tags: list[str] | None = None
 
     def __post_init__(self):
         # Unescape text
