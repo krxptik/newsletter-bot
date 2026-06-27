@@ -1,5 +1,6 @@
 import logging
 from enum import Enum, auto
+from pathlib import Path
 from email.message import EmailMessage
 import os
 import time
@@ -20,7 +21,7 @@ class State(Enum):
 
 
 class MenuHandler:
-    def __init__(self, subject: str, path: str, html: str):
+    def __init__(self, subject: str, path: Path, html: str):
         self.state = State.MAIN
         self.path = path
         self.to_addrs = set()
@@ -97,6 +98,8 @@ class MenuHandler:
         if not user_input.isdigit():
             return
         option = int(user_input)
+        if self.current_recipient_type is None:
+            return
         rt = self.current_recipient_type
         if option == 1:
             self._add_individual(rt)
@@ -212,7 +215,7 @@ def display_details(em: EmailMessage) -> None:
 
 # ===== ENTRY POINT =====
 
-def send_menu(subject: str, path: str, html: str):
+def send_menu(subject: str, path: Path, html: str):
     handler = MenuHandler(subject, path, html)
 
     while handler.state is not None:

@@ -39,11 +39,11 @@ def collect_non_rss_enrichment() -> dict | None:
     print("Some websites display the publish date on the article page itself.")
     print("If visible, it will be used to filter out older articles.")
 
-    fallback = confirmation("Is the publish date visible on article pages?")
+    visible = confirmation("Is the publish date visible on article pages?")
 
     return {
         "article_regex": regex,
-        "allow_regex_fallback": fallback
+        "pub_date_visible": visible
     }
 
 

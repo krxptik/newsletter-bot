@@ -12,7 +12,7 @@ PAUSE_SHORT = 3
 
 # ===== DISPLAY =====
 
-def _display_sender_menu(email: str, app_password: str) -> None:
+def _display_sender_menu(email: str | None, app_password: str | None) -> None:
     clear_terminal()
     divider()
     print()

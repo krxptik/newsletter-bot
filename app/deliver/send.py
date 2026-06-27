@@ -19,7 +19,11 @@ def send_email(em: EmailMessage, to_addrs: list[str]) -> None:
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             logger.debug(f"Connecting to {SMTP_SERVER}:{SMTP_PORT}")
             server.starttls(context=context)
-            server.login(os.getenv("EMAIL_ADDRESS"), os.getenv("EMAIL_APP_PASSWORD"))
+            email_address = os.getenv("EMAIL_ADDRESS")
+            email_app_password = os.getenv("EMAIL_APP_PASSWORD")
+            if email_address is None or email_app_password is None:
+                raise ValueError("Missing EMAIL_ADDRESS or EMAIL_APP_PASSWORD environment variable")
+            server.login(email_address, email_app_password)
             logger.debug("SMTP login successful")
             server.send_message(em, to_addrs=to_addrs)
 

@@ -1,6 +1,7 @@
 import logging
 import threading
 from datetime import date
+from typing import Any, cast
 
 from config import RUNTIME_DIR
 
@@ -12,11 +13,11 @@ logger = logging.getLogger(__name__)
 AI_USAGE_FILE = RUNTIME_DIR / "ai_usage.json"
 
 
-def _load_ai_usage(path=AI_USAGE_FILE) -> dict:
+def _load_ai_usage(path=AI_USAGE_FILE) -> dict[str, dict[str, Any]]:
     logger.debug(f"Loading AI usage from {path}")
     data = load_file_data(path, default={})
     logger.debug(f"Loaded usage data for {len(data)} model(s)")
-    return data
+    return cast(dict[str, dict[str, Any]], data)
 
 
 def _save_ai_usage(data: dict, path=AI_USAGE_FILE) -> None:

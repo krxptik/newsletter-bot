@@ -1,7 +1,8 @@
 import json
 import logging
+from pathlib import Path
 
-def load_file_data(path, default=None) -> list | dict:
+def load_file_data(path: Path, default=None) -> list | dict:
     logger = logging.getLogger(__name__)
     logger.debug(f"Loading data from {path}")
 

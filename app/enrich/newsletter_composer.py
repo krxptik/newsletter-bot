@@ -56,7 +56,7 @@ def generate_newsletter_metadata(
         prompt = _build_newsletter_prompt(articles)
         success, response = safe_prompt(client, prompt)
 
-        if not success:
+        if not success or response is None:
             logger.warning("Newsletter generation failed — using fallback")
             return (FALLBACK_TITLE, FALLBACK_SUMMARY)
 

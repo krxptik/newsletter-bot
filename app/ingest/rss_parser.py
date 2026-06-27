@@ -63,7 +63,7 @@ def _get_article_content(
     entry,
     link: str,
     feed_obj: dict,
-    session: requests.Session | None,
+    session: requests.Session,
 ) -> str | None:
     """Get article content via scraping or RSS data, depending on feed config."""
     if feed_obj.get("scrape_content"):
@@ -74,7 +74,7 @@ def _get_article_content(
 def parse_entry(
     entry,
     feed_obj: dict,
-    session: requests.Session | None = None,
+    session: requests.Session,
 ) -> Article | None:
     """Parse a feed entry into an Article, or return None if parsing fails.
 
@@ -97,7 +97,7 @@ def parse_entry(
 
 # --- Feed processing ---
 
-def parse_rss(feed_obj: dict, session: requests.Session | None = None) -> list[Article]:
+def parse_rss(feed_obj: dict, session: requests.Session) -> list[Article]:
     """Process an RSS feed and return recent Article objects.
 
     Args:

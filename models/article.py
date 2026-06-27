@@ -6,7 +6,7 @@ import html
 class Article:
     title: str
     link: str
-    pub_date: datetime
+    pub_date: datetime | None
     text: str | None = None
     source: str | None = None
     summary: str | None = None

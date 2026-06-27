@@ -42,6 +42,6 @@ def normalise_url(url: str) -> str:
 
 def is_valid_url(url: str) -> bool:
     try:
-        return validators.url(url)
+        return bool(validators.url(url))
     except Exception:
         return False

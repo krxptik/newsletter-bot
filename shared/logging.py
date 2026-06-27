@@ -22,6 +22,7 @@ def setup_logging(log_to_file: bool = True) -> None:
     )
 
     handlers: list[logging.Handler] = []
+    log_file = None
 
     if log_to_file:
         log_dir = Path("logs")
@@ -38,5 +39,5 @@ def setup_logging(log_to_file: bool = True) -> None:
         logging.getLogger(lib).setLevel(logging.WARNING)
 
     logging.getLogger(__name__).info("Logging initialised")
-    if log_to_file:
+    if log_file is not None:
         logging.getLogger(__name__).info(f"Log file: {log_file}")

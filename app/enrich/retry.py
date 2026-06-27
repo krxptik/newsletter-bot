@@ -13,14 +13,18 @@ class PromptError(Enum):
 
 def _identify_client_error(e: AIClientError) -> tuple[PromptError, int | None]:
     """Classify AIClientError."""
-    cause = e.__cause__
+    cause = getattr(e, '__cause__', None)
 
-    if not hasattr(cause, 'details'):
+    if cause is None or not hasattr(cause, 'details'):
         logger.debug("Non-Gemini structured error")
         return (PromptError.OTHER, None)
 
-    # Gemini client error
-    error_block = cause.details.get('error', {})
+    details = getattr(cause, 'details', {})
+    if not isinstance(details, dict):
+        logger.debug("Non-Gemini structured error")
+        return (PromptError.OTHER, None)
+
+    error_block = details.get('error', {})
     quota, retry = {}, {}
 
     for entry in error_block.get('details', []):
@@ -48,8 +52,9 @@ def _handle_client_error(e: AIClientError, attempt: int) -> bool:
         return False
 
     if error_type == PromptError.RATE_LIMIT:
-        logger.info(f"Rate limited. Sleeping {retry_delay + 1}s")
-        time.sleep(retry_delay + 1)
+        delay = (retry_delay or 0) + 1
+        logger.info(f"Rate limited. Sleeping {delay}s")
+        time.sleep(delay)
         return True
 
     # OTHER → exponential backoff

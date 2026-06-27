@@ -60,7 +60,7 @@ def display_article_details(article: Article) -> None:
         pub_date,
         article.source,
         article.link,
-        ', '.join(article.tags),
+        ', '.join(article.tags or []),
         article.summary
     ]))
     divider()

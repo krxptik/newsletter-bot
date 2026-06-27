@@ -1,4 +1,5 @@
 import logging
+from typing import Any, cast
 
 from config import CONFIG_DIR
 from app.persistence.data_manager import load_file_data, overwrite_file_data
@@ -12,7 +13,7 @@ def load_feeds(path=FEEDS_FILE) -> list[dict]:
     logger.debug(f"Loading feeds from {path}")
     data = load_file_data(path, default=[])
     logger.info(f"Loaded {len(data)} feeds from config")
-    return data
+    return cast(list[dict], data)
 
 
 def save_feeds(feeds: list[dict], path=FEEDS_FILE) -> None:

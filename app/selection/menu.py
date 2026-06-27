@@ -122,6 +122,7 @@ def menu(articles: list[Article]) -> list[Article]:
             handler.handle_list_input(input("\n> ").strip())
 
         elif handler.state == State.ARTICLE_MENU:
+            assert handler.current_article is not None
             action = "Remove from" if handler.from_selected else "Add to"
             display_article_details(handler.current_article)
             print(f"(1) {action} newsletter")

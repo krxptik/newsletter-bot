@@ -19,6 +19,11 @@ class Config:
     def __init__(self):
         logger.debug(f"Loading config from {CONFIG_FILE}")
         raw = load_file_data(CONFIG_FILE)
+
+        if not isinstance(raw, dict):
+            logger.warning(f"Unexpected config format {type(raw).__name__}; using defaults")
+            raw = {}
+            
         self.ai_ready = raw.get("ai_ready", False)
         self.sender_ready = raw.get("sender_ready", False)
         self.feeds_ready = raw.get("feeds_ready", False)

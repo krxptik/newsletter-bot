@@ -48,7 +48,7 @@ def display_banner_figlet(header: str, width: int = WIDTH) -> None:
 def label_line(
         label: str, value: str, 
         width: int = WIDTH, separator: str = "", 
-        label_width: int = None, justify: str = "left") -> str:
+        label_width: int | None = None, justify: str = "left") -> str:
     
     label_width = label_width if label_width else len(str(label))
     separator_length = len(separator) + 2

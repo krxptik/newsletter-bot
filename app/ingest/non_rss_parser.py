@@ -23,12 +23,12 @@ DATE_PATTERNS = [
 
 # --- Date extraction ---
 
-def _find_date_text(tag, allow_fallback: bool) -> str | None:
+def _find_date_text(tag, pub_date_visible: bool) -> str | None:
     """Get the raw text to search for a date within a tag."""
     date_div = tag.find("div", class_="published_at")
     if date_div:
         return date_div.get_text(strip=True)
-    if allow_fallback:
+    if pub_date_visible:
         return tag.get_text()
     logger.debug("_find_date_text: no date div found and fallback is disabled")
     return None
@@ -48,9 +48,9 @@ def _parse_date_from_text(raw_text: str) -> datetime | None:
     return None
 
 
-def extract_pub_date(tag, allow_fallback: bool = True) -> datetime | None:
+def extract_pub_date(tag, pub_date_visible: bool = True) -> datetime | None:
     """Extract publication date from a BeautifulSoup tag using regex patterns."""
-    raw_text = _find_date_text(tag, allow_fallback)
+    raw_text = _find_date_text(tag, pub_date_visible)
     if raw_text is None:
         return None
     date = _parse_date_from_text(raw_text)
@@ -70,7 +70,7 @@ def _extract_article_body(article_tag) -> str:
 def scrape_article(
     url: str,
     session: requests.Session,
-    allow_fallback: bool,
+    pub_date_visible: bool,
     source_name: str,
 ) -> Article | None:
     """Scrape a single article URL and return an Article, or None if scraping fails."""
@@ -83,9 +83,14 @@ def scrape_article(
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    title_tag  = soup.find("title")
+    title_tag = soup.find("title")
     if title_tag is None:
         logger.debug(f"scrape_article: no <title> tag at {url}")
+        return None
+
+    title_text = title_tag.get_text(strip=True)
+    if not title_text:
+        logger.debug(f"scrape_article: empty title at {url}")
         return None
 
     article_tag = soup.find("article")
@@ -93,12 +98,12 @@ def scrape_article(
         logger.debug(f"scrape_article: no <article> tag at {url}")
         return None
 
-    pub_date = extract_pub_date(article_tag, allow_fallback)
+    pub_date = extract_pub_date(article_tag, pub_date_visible)
     if pub_date is None:
         logger.debug(f"scrape_article: no publication date found at {url}")
 
     text = _extract_article_body(article_tag)
-    return Article(title_tag.string, url, pub_date, text, source_name)
+    return Article(title_text, url, pub_date, text, source_name)
 
 
 # --- Feed processing ---
@@ -119,7 +124,16 @@ def _collect_article_links(feed_soup, article_regex: str, domain: str) -> list[s
 def parse_non_rss(feed_obj: dict, session: requests.Session) -> list[Article]:
     """Scrape a non-RSS feed page and return recent Article objects."""
     name = feed_obj.get("name")
-    url = feed_obj.get("url", "")
+    url = feed_obj.get("url")
+
+    if not name:
+        logger.warning("parse_non_rss: missing feed name; returning []")
+        return []
+
+    if not url:
+        logger.warning("parse_non_rss: missing feed url for '%s'; returning []", name)
+        return []
+
     logger.info(f"parse_non_rss: fetching '{name}' ({url})")
 
     parsed_url = urlparse(url)
@@ -134,10 +148,10 @@ def parse_non_rss(feed_obj: dict, session: requests.Session) -> list[Article]:
     article_links = _collect_article_links(feed_soup, feed_obj.get("article_regex", ""), domain)
     logger.debug(f"parse_non_rss: {len(article_links)} unique links found on '{name}'")
 
-    allow_fallback = feed_obj.get("allow_regex_fallback", True)
+    pub_date_visible = feed_obj.get("pub_date_visible", True)
     articles = []
     for link in article_links:
-        article = scrape_article(link, session, allow_fallback, name)
+        article = scrape_article(link, session, pub_date_visible, name)
         if article is None:
             continue
         if not article.is_recent():

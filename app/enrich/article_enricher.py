@@ -64,7 +64,7 @@ def _enrich_article(
         prompt = _build_article_prompt(article)
         success, response = safe_prompt(client, prompt)
 
-        if not success:
+        if not success or response is None:
             return EnrichResult.HALT
 
         try:

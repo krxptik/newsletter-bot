@@ -72,7 +72,10 @@ class GeminiClient(AIClient):
                 contents=prompt
             )
             self._post_request()
-            return response.text
+            text = response.text
+            if text is None:
+                raise AIClientError("Empty response from Gemini API")
+            return text
         except Exception as e:
             logger.error(f"Gemini API call failed: {e}")
             raise AIClientError(str(e)) from e
@@ -105,7 +108,10 @@ class GemmaClient(AIClient):
                 contents=prompt
             )
             self._post_request()
-            return response.text
+            text = response.text
+            if text is None:
+                raise AIClientError("Empty response from Gemma API")
+            return text
         except Exception as e:
             logger.error(f"Gemma API call failed: {e}")
             raise AIClientError(str(e)) from e
