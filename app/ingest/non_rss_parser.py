@@ -6,9 +6,9 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from models.article import Article
+from models import *
 from shared.datefuncs import clean_ordinal_day
-from app.ingest.safe_request import safe_get
+from shared.safe_request import safe_get
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def _find_date_text(tag, pub_date_visible: bool) -> str | None:
         return date_div.get_text(strip=True)
     if pub_date_visible:
         return tag.get_text()
-    logger.debug("_find_date_text: no date div found and fallback is disabled")
+    logger.debug("No date div found and fallback is disabled")
     return None
 
 
@@ -44,7 +44,7 @@ def _parse_date_from_text(raw_text: str) -> datetime | None:
         try:
             return datetime.strptime(cleaned, fmt)
         except ValueError as e:
-            logger.debug(f"_parse_date_from_text: strptime failed for '{cleaned}': {e}")
+            logger.debug(f"strptime failed for '{cleaned}': {e}")
     return None
 
 
@@ -55,7 +55,7 @@ def extract_pub_date(tag, pub_date_visible: bool = True) -> datetime | None:
         return None
     date = _parse_date_from_text(raw_text)
     if date is None:
-        logger.debug("extract_pub_date: no date pattern matched")
+        logger.debug("No date pattern matched")
     return date
 
 
@@ -74,33 +74,33 @@ def scrape_article(
     source_name: str,
 ) -> Article | None:
     """Scrape a single article URL and return an Article, or None if scraping fails."""
-    logger.debug(f"scrape_article: fetching {url}")
+    logger.debug(f"Fetching {url}")
 
     response = safe_get(url, session)
     if response is None:
-        logger.debug(f"scrape_article: request failed for {url}")
+        logger.debug(f"Request failed for {url}")
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
 
     title_tag = soup.find("title")
     if title_tag is None:
-        logger.debug(f"scrape_article: no <title> tag at {url}")
+        logger.debug(f"No <title> tag at {url}")
         return None
 
     title_text = title_tag.get_text(strip=True)
     if not title_text:
-        logger.debug(f"scrape_article: empty title at {url}")
+        logger.debug(f"Empty title at {url}")
         return None
 
     article_tag = soup.find("article")
     if not article_tag:
-        logger.debug(f"scrape_article: no <article> tag at {url}")
+        logger.debug(f"No <article> tag at {url}")
         return None
 
     pub_date = extract_pub_date(article_tag, pub_date_visible)
     if pub_date is None:
-        logger.debug(f"scrape_article: no publication date found at {url}")
+        logger.debug(f"No publication date found at {url}")
 
     text = _extract_article_body(article_tag)
     return Article(title_text, url, pub_date, text, source_name)
@@ -121,43 +121,79 @@ def _collect_article_links(feed_soup, article_regex: str, domain: str) -> list[s
     return list(links)
 
 
-def parse_non_rss(feed_obj: dict, session: requests.Session) -> list[Article]:
+def parse_non_rss(feed_obj: Feed, session: requests.Session) -> list[Article]:
     """Scrape a non-RSS feed page and return recent Article objects."""
-    name = feed_obj.get("name")
-    url = feed_obj.get("url")
+    name = feed_obj.name
+    url = feed_obj.url
 
     if not name:
-        logger.warning("parse_non_rss: missing feed name; returning []")
+        logger.warning("Missing feed name; returning []")
         return []
 
     if not url:
-        logger.warning("parse_non_rss: missing feed url for '%s'; returning []", name)
+        logger.warning("Missing feed url for '%s'; returning []", name)
         return []
 
-    logger.info(f"parse_non_rss: fetching '{name}' ({url})")
+    logger.info(f"Fetching '{name}' ({url})")
 
     parsed_url = urlparse(url)
     domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
     response = safe_get(url, session)
     if response is None:
-        logger.warning(f"parse_non_rss: could not fetch feed page {url}")
+        logger.warning(f"Could not fetch feed page {url}")
         return []
 
     feed_soup = BeautifulSoup(response.text, "html.parser")
-    article_links = _collect_article_links(feed_soup, feed_obj.get("article_regex", ""), domain)
-    logger.debug(f"parse_non_rss: {len(article_links)} unique links found on '{name}'")
+    article_links = _collect_article_links(feed_soup, feed_obj.article_regex or "", domain)
+    logger.debug(f"{len(article_links)} unique links found on '{name}'")
 
-    pub_date_visible = feed_obj.get("pub_date_visible", True)
+    pub_date_visible = feed_obj.pub_date_visible
     articles = []
     for link in article_links:
         article = scrape_article(link, session, pub_date_visible, name)
         if article is None:
             continue
         if not article.is_recent():
-            logger.debug(f"parse_non_rss: skipping old article '{article.title[:50]}'")
+            logger.debug(f"Skipping old article '{article.title[:50]}'")
             continue
         articles.append(article)
 
-    logger.info(f"parse_non_rss: {len(articles)} recent articles from '{name}'")
+    logger.info(f"{len(articles)} recent articles from '{name}'")
     return articles
+
+if __name__ == "__main__":
+    import requests
+    import trafilatura
+    
+    def scrape_article_traf(url, session, source_name):
+        response = safe_get(url, session)
+        if response is None:
+            return None
+
+        result = trafilatura.bare_extraction(
+            response.text,
+            include_comments=False,
+            with_metadata=True,
+            favor_precision=True,
+        )
+
+        if result is None or not result.text:
+            return None
+
+        title = result.title
+        body = result.text
+        pub_date = result.date  # usually a string like "2026-07-15" or None
+
+        return Article(title or url, url, pub_date, body, source_name)
+    
+    with requests.Session() as session:
+        art = scrape_article_traf("https://www.bbc.co.uk/future/tags/language/", session, source_name="meow")
+        print(art)
+        print(art.title)
+        print(art.link)
+        print(art.pub_date)
+        print(art.text)
+        print(art.source)
+        print(art.summary)
+        print(art.tags)

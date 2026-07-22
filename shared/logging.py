@@ -17,7 +17,7 @@ from datetime import datetime
 
 def setup_logging(log_to_file: bool = True) -> None:
     fmt = logging.Formatter(
-        fmt="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
+        fmt="%(asctime)s  %(levelname)-8s  %(name)s.%(funcName)s — %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 

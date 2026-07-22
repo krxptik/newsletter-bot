@@ -7,27 +7,26 @@ from dotenv import load_dotenv
 
 # Local — shared utilities
 from shared.logging import setup_logging
-from shared.terminal import display_banner_figlet, run_with_spinner, WIDTH
+from shared.ui import widgets
+from shared.exceptions import UserExitError, InsufficientQuotaError
+from shared.ai_client import GemmaClient # current model
 
 # Local — version
 from version import __version__
 
 # Local — app
-from app.bootstrap.config_state_handler import start_initialisation
-from app.bootstrap.settings_menu import UserExitError
-from app.compose.context_builder import generate_context
-from app.deliver.send import send_email
-from app.deliver.send_menu import send_menu
-from shared.ai_client import GemmaClient # current model
+from app.persistence import load_feeds, save_used_urls
+from app.bootstrap import start_initialisation
+from app.ingest.main_parser import parse_all
+from app.filter.article_limit import retrieve_article_limit
+from app.filter.filter_articles import filter_articles
 from app.enrich.article_enricher import process_articles
 from app.enrich.newsletter_composer import generate_newsletter_metadata
-from app.ingest.main_parser import parse_all
-from app.filter.article_limit import retrieve_article_limit, InsufficientQuotaError
-from app.filter.filter_articles import filter_articles
-from app.persistence.feed_store import load_feeds
-from app.persistence.used_url_store import save_used_urls
-from app.render.render import render_newsletter, save_newsletter, preview_newsletter
 from app.selection.menu import menu
+from app.compose.context_builder import generate_context
+from app.render.render import render_newsletter, save_newsletter, preview_newsletter
+from app.deliver.send_menu import send_menu
+from app.deliver.send import send_email
 
 
 setup_logging()
@@ -46,8 +45,7 @@ def main():
         logger.debug("Initialising AI client")
         ai_client = GemmaClient.from_env()
 
-        display_banner_figlet("ellie!")
-        print(f"\nRunning {__version__}.\n")
+        widgets.banner_figlet("ellie!")
 
         # --- Ingest ---
         feeds = load_feeds()
@@ -72,10 +70,9 @@ def main():
         logger.info(f"User selected {len(selected_articles)} articles")
 
         # --- Newsletter generation ---
-        display_banner_figlet("ellie!")
-        print(f"\nRunning {__version__}.\n")
+        widgets.banner_figlet("ellie!")
         logger.info("Generating newsletter title and summary...")
-        title, summary = run_with_spinner(
+        title, summary = widgets.run_with_spinner(
             "Generating newsletter...",
             generate_newsletter_metadata,
             ai_client,
@@ -102,26 +99,30 @@ def main():
         logger.info("Saving used article URLs...")
         save_used_urls(selected_articles)
 
-        logger.info("=" * WIDTH)
-        logger.info("PROGRAM COMPLETED SUCCESSFULLY".center(WIDTH))
-        logger.info("=" * WIDTH)
+        logger.info("=" * 64)
+        logger.info("PROGRAM COMPLETED SUCCESSFULLY".center(64))
+        logger.info("=" * 64)
 
     except UserExitError:
-        logger.info("User exited from main menu")
-        print("Program ended.")
+        logger.info("User exited from programme.")
+        widgets.blank()
+        widgets.text("Program ended.")
 
     except InsufficientQuotaError as e:
         logger.warning(str(e))
-        print(f"\n{e}")
+        widgets.blank()
+        widgets.text(str(e))
         
     except KeyboardInterrupt:
         logger.warning("Execution interrupted by user (KeyboardInterrupt)")
-        print("\nExecution interrupted by user\n")
+        widgets.blank()
+        widgets.text("Execution interrupted by user")
 
     except Exception as e:
         logger.exception("Fatal error in main execution")
-        print(f"\n\nFATAL ERROR: {e}")
-        print("Check logs for details.")
+        widgets.blank()
+        widgets.text(f"FATAL ERROR: {e}")
+        widgets.text("Check logs for details.")
         raise
 
 if __name__ == "__main__":

@@ -1,9 +1,12 @@
-from shared.ai_client import AIClient, AIClientError
-from enum import Enum, auto
 import time
 import logging
+from enum import Enum, auto
+
+from shared.ai_client import AIClient, AIClientError
+from shared.google_errors import index_error_details
 
 logger = logging.getLogger(__name__)
+
 
 class PromptError(Enum):
     QUOTA_EXCEEDED = auto()
@@ -12,27 +15,16 @@ class PromptError(Enum):
 
 
 def _identify_client_error(e: AIClientError) -> tuple[PromptError, int | None]:
-    """Classify AIClientError."""
     cause = getattr(e, '__cause__', None)
+    details = getattr(cause, 'details', None) if cause else None
 
-    if cause is None or not hasattr(cause, 'details'):
-        logger.debug("Non-Gemini structured error")
-        return (PromptError.OTHER, None)
-
-    details = getattr(cause, 'details', {})
     if not isinstance(details, dict):
         logger.debug("Non-Gemini structured error")
         return (PromptError.OTHER, None)
 
-    error_block = details.get('error', {})
-    quota, retry = {}, {}
-
-    for entry in error_block.get('details', []):
-        type_str = entry.get('@type', '')
-        if type_str.endswith('QuotaFailure'):
-            quota = entry['violations'][0]
-        elif type_str.endswith('RetryInfo'):
-            retry = entry
+    entries = index_error_details(details)
+    retry = entries.get('RetryInfo')
+    quota = entries.get('QuotaFailure', {}).get('violations', [{}])[0]
 
     if not retry:
         return (PromptError.OTHER, None)
@@ -42,6 +34,7 @@ def _identify_client_error(e: AIClientError) -> tuple[PromptError, int | None]:
 
     retry_delay = int(retry['retryDelay'].rstrip('s'))
     return (PromptError.RATE_LIMIT, retry_delay)
+
 
 def _handle_client_error(e: AIClientError, attempt: int) -> bool:
     """Return whether to continue retrying."""

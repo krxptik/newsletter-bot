@@ -1,8 +1,8 @@
 import logging
 
-from models.article import Article
-from app.persistence.data_manager import load_file_data, overwrite_file_data
-from config import RUNTIME_DIR
+from models import Article
+from .data_manager import load_file_data, overwrite_file_data
+from path_config import RUNTIME_DIR
 
 logger = logging.getLogger(__name__)
 

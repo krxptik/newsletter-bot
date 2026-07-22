@@ -1,7 +1,8 @@
-from models.article import Article
+from models import Article
+from shared.ui import widgets
 from shared.terminal import clear_terminal, divider, label_block, WIDTH
 from app.selection.constants import ARTICLES_PER_PAGE, LIST_NO_WIDTH, LIST_SPACING, LIST_WIDTH
-from app.selection.pager import Pager
+from shared.pager import Pager
 
 
 # ===== HELPERS =====
@@ -73,5 +74,5 @@ def confirm_selection(selected: Pager) -> bool:
     for i, article in enumerate(selected.items, 1):
         print(f"({i}) {_truncate(article.title, WIDTH-4)}")
     divider()
-    response = input("\nGenerate newsletter? (Y/N): ").strip().upper()
+    response = widgets.m_input("Generate newsletter? (Y/N): ").strip().upper()
     return response == 'Y'

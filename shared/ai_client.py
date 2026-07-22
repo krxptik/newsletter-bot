@@ -1,7 +1,7 @@
 from google import genai
 import logging
 
-from app.persistence.ai_usage_store import retrieve_ai_usage, increment_ai_usage
+from app.persistence import retrieve_ai_usage, increment_ai_usage
 
 logger = logging.getLogger(__name__)
 

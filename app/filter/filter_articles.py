@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime
 
-from models.article import Article
-from app.persistence.used_url_store import load_used_urls
+from models import Article
+from app.persistence import load_used_urls
 
 logger = logging.getLogger(__name__)
 

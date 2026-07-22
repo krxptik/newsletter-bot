@@ -1,5 +1,5 @@
 from datetime import datetime
-from models.article import Article
+from models import Article
 
 def generate_context(title, summary, articles: list[Article]) -> dict:
     return {

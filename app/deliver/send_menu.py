@@ -6,8 +6,9 @@ import os
 import time
 
 from shared.terminal import clear_terminal, divider, display_banner, label_line
+from shared.ui import widgets
 from app.render.render import preview_newsletter
-from app.persistence.email_addrs_store import load_address_book
+from app.persistence import load_address_book
 from app.bootstrap.recipient_manager import run_recipient_manager
 
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ class MenuHandler:
             return
         option = int(user_input)
         if option == 1:
-            new = input("New subject: ").strip()
+            new = widgets.m_input("New subject: ").strip()
             if new:
                 self._set_header('Subject', new)
         elif option == 2:
@@ -117,7 +118,7 @@ class MenuHandler:
     # --- Add / remove ---
 
     def _add_individual(self, recipient_type: str) -> None:
-        email = input("Email address to add: ").strip()
+        email = widgets.m_input("Email address to add: ").strip()
         if not email:
             return
         if email in self.to_addrs:
@@ -128,7 +129,7 @@ class MenuHandler:
         self.to_addrs.add(email)
 
     def _add_group(self, recipient_type: str) -> None:
-        name = input("Group name to add: ").strip().upper()
+        name = widgets.m_input("Group name to add: ").strip().upper()
         if not name:
             return
         addrs = self.groups.get(name)
@@ -143,7 +144,7 @@ class MenuHandler:
         self.to_addrs.update(addrs)
 
     def _remove_individual(self, recipient_type: str) -> None:
-        email = input("Email address to remove: ").strip()
+        email = widgets.m_input("Email address to remove: ").strip()
         if email in self.to_addrs:
             self.to_addrs.remove(email)
             self.addrs_names[recipient_type].remove(email)
@@ -152,7 +153,7 @@ class MenuHandler:
             self._show_error(f"'{email}' not found in {recipient_type}.")
 
     def _remove_group(self, recipient_type: str) -> None:
-        name = input("Group name to remove: ").strip().upper()
+        name = widgets.m_input("Group name to remove: ").strip().upper()
         addrs = self.groups.get(name)
         if addrs is None:
             self._show_error(f"Group '{name}' not found in address book.")
@@ -227,7 +228,7 @@ def send_menu(subject: str, path: Path, html: str):
             print("  (1) Edit details")
             print("  (2) Preview HTML")
             print("  (3) Submit and send")
-            handler.handle_main_input(input("\n> ").strip())
+            handler.handle_main_input(widgets.m_input("> ").strip())
 
         elif handler.state == State.EDIT:
             display_details(handler.em)
@@ -237,7 +238,7 @@ def send_menu(subject: str, path: Path, html: str):
             print("  (3) Manage Cc")
             print("  (4) Manage Bcc")
             print("  (5) Back")
-            handler.handle_edit_input(input("\n> ").strip())
+            handler.handle_edit_input(widgets.m_input("> ").strip())
 
         elif handler.state == State.MANAGE_RECIPIENTS:
             display_details(handler.em)
@@ -250,7 +251,7 @@ def send_menu(subject: str, path: Path, html: str):
             print("  (4) Remove group")
             print("  (5) Edit address book")
             print("  (6) Back")
-            handler.handle_recipient_input(input("\n> ").strip())
+            handler.handle_recipient_input(widgets.m_input("> ").strip())
 
         elif handler.state == State.ADDRESS_BOOK:
             run_recipient_manager(title="EDIT ADDRESS BOOK")

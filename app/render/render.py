@@ -3,7 +3,7 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from config import TEMPLATES_DIR, OUTPUT_DIR
+from path_config import TEMPLATES_DIR, OUTPUT_DIR
 
 
 def preview_newsletter(path: Path) -> None:

@@ -1,5 +1,5 @@
-from config import AI_PROMPTS_DIR
-from models.article import Article
+from path_config import AI_PROMPTS_DIR
+from models import Article
 from app.enrich.retry import safe_prompt
 from app.enrich.article_enricher import AIParsingError
 from shared.ai_client import AIClient

@@ -5,8 +5,8 @@ from enum import Enum, auto
 
 from tqdm import tqdm
 
-from config import AI_PROMPTS_DIR
-from models.article import Article
+from path_config import AI_PROMPTS_DIR
+from models import Article
 from app.enrich.retry import safe_prompt
 from shared.ai_client import AIClient
 from shared.exceptions import InsufficientQuotaError

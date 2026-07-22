@@ -1,10 +1,12 @@
 from enum import Enum, auto
 import time
 
-from models.article import Article
+from models import Article
+from shared.ui import widgets
 from shared.terminal import clear_terminal, display_banner, center_text
-from app.selection.pager import Pager
+from shared.pager import Pager
 from app.selection.display import confirm_selection, display_article_details, display_list
+from app.selection.constants import ARTICLES_PER_PAGE
 
 
 class State(Enum):
@@ -14,8 +16,8 @@ class State(Enum):
 
 class MenuHandler:
     def __init__(self, articles: list[Article]):
-        self.available = Pager(articles)
-        self.selected = Pager([])
+        self.available = Pager(articles, ARTICLES_PER_PAGE)
+        self.selected = Pager([], ARTICLES_PER_PAGE)
         self.state = State.LIST
         self.current_article: Article | None = None
         self.from_selected = False
@@ -119,7 +121,7 @@ def menu(articles: list[Article]) -> list[Article]:
             print(center_text(top_msg))
             print(center_text(f"{'Navigate: N / P  |  NS / PS':<{options_length}}"))
             print(center_text(f"{'Continue: (0)':<{options_length}}"))
-            handler.handle_list_input(input("\n> ").strip())
+            handler.handle_list_input(widgets.m_input("> ").strip())
 
         elif handler.state == State.ARTICLE_MENU:
             assert handler.current_article is not None
@@ -127,6 +129,6 @@ def menu(articles: list[Article]) -> list[Article]:
             display_article_details(handler.current_article)
             print(f"(1) {action} newsletter")
             print("(2) Go back")
-            handler.handle_article_menu(input("\n> ").strip())
+            handler.handle_article_menu(widgets.m_input("> ").strip())
 
     return handler.selected.items
