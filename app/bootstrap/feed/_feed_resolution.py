@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -16,6 +17,34 @@ COMMON_FEED_PATHS = [
     "/atom.xml",
     "/feeds/posts/default",
 ]
+FEED_CONTENT_TYPES = {
+    "application/atom",
+    "application/atom+xml",
+    "application/feed+json",
+    "application/json",
+    "application/rdf",
+    "application/rdf+xml",
+    "application/rss",
+    "application/rss+xml",
+    "application/xml",
+    "text/atom",
+    "text/atom+xml",
+    "text/plain",
+    "text/rdf",
+    "text/rdf+xml",
+    "text/rss",
+    "text/rss+xml",
+    "text/xml",
+}
+FEED_URL_HINT_RE = re.compile(
+    r"\.(?:atom|rdf|rss|xml)$|"
+    r"\b(?:atom|rss)\b|"
+    r"\?type=100$|"
+    r"feeds/posts/default/?$|"
+    r"\?feed=(?:atom|rdf|rss|rss2)|"
+    r"feed$",
+    re.IGNORECASE,
+)
 TRUNCATION_MARKERS = [
     "continue reading",
     "read more",
@@ -30,11 +59,14 @@ def _find_declared_feed_url(response: requests.Response) -> str | None:
     """Scan an already-fetched response for a declared <link rel="alternate"> feed."""
     soup = BeautifulSoup(response.content, "html.parser")
     for link in soup.find_all("link", rel="alternate"):
-        t = link.get("type") or ""
-        if "rss" in t or "atom" in t:
-            href = link.get("href") or ""
-            resolved = urljoin(response.url, str(href))
-            if href and is_valid_url_format(resolved):  # syntax only — resolvability checked by _check_url_and_feed next
+        t = str(link.get("type") or "").lower()
+        href = str(link.get("href") or "")
+        resolved = urljoin(response.url, href)
+        if not href:
+            continue
+
+        if t in FEED_CONTENT_TYPES or "rss" in t or "atom" in t or FEED_URL_HINT_RE.search(href):
+            if is_valid_url_format(resolved):  # syntax only — resolvability checked by _check_url_and_feed next
                 return resolved
     return None
 
