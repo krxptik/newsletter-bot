@@ -1,4 +1,3 @@
-# shared/google_errors.py
 import logging
 
 logger = logging.getLogger(__name__)

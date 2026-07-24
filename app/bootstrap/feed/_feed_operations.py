@@ -4,11 +4,11 @@ import time
 import requests
 
 from ._feed_display import render_remove_section, display_feed_data
-from ._feed_resolution import resolve_feed
+from ._feed_resolution import resolve_feed_urls
 from ._input_helpers import input_url, input_name, input_feed_selection
 
-from app.persistence import save_feeds
-from models import Feed
+from app.persistence import save_feeds, save_feed_caches, get_or_create_cache, remove_feed_cache
+from models import Feed, FeedCache
 from shared.ui import screen, widgets, PAUSE_SHORT
 from shared.prompts import confirmation
 from shared.pager import Pager
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # ===== REMOVE FEED =====
 
-def remove_feed(pager: Pager, feeds: list[Feed]) -> None:
+def remove_feed(pager: Pager, feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
     logger.info("Remove feed flow started")
 
     if not feeds:
@@ -41,16 +41,23 @@ def remove_feed(pager: Pager, feeds: list[Feed]) -> None:
         return
 
     feeds.remove(feed_to_remove)
+    remove_feed_cache(feed_caches, feed_to_remove)
     save_feeds(feeds)
-    logger.info(f"Feed removed: '{feed_to_remove.name}' ({feed_to_remove.url})")
+    save_feed_caches(feed_caches)
+    logger.info(f"Feed removed: '{feed_to_remove.name}' ({feed_to_remove.site_url}, {feed_to_remove.feed_url})")
     widgets.text(f"Feed removed: '{feed_to_remove.name}'")
     time.sleep(PAUSE_SHORT)
 
 
 # ===== ADD FEED =====
 
-def _is_duplicate(url: str, feeds: list[Feed], name: str | None = None) -> bool:
-    duplicate = any(feed.url == url or (name and feed.name == name) for feed in feeds)
+def _is_duplicate(site_url, feed_url, name, feeds) -> bool:
+    duplicate = any(
+        (site_url is not None and feed.site_url == site_url) or
+        (feed_url is not None and feed.feed_url == feed_url) or
+        feed.name == name
+        for feed in feeds
+    )
     if duplicate:
         widgets.blank()
         widgets.text("ERROR: A feed with that URL or name already exists.")
@@ -64,32 +71,19 @@ def _build_feed(name: str, feeds: list[Feed], session: requests.Session) -> Feed
     if url_response is None:
         return None
 
-    feed_url = url_response.url
+    site_url, feed_url = resolve_feed_urls(url_response, session)
 
-    if _is_duplicate(feed_url, feeds, name):
-        return None
-
-    resolution = resolve_feed(url_response, session)
-    if resolution:
-        feed_url, scrape_needed = resolution
-        metadata_retrieval = "collect"
-        content_retrieval = "scrape" if scrape_needed else "collect"
-    else:
-        metadata_retrieval = "scrape"
-        content_retrieval = "scrape"
-
-    if _is_duplicate(feed_url, feeds):
+    if _is_duplicate(site_url, feed_url, name, feeds):
         return None
 
     return Feed(
-        url=feed_url,
         name=name,
-        metadata_retrieval=metadata_retrieval,
-        content_retrieval=content_retrieval,
+        site_url=site_url,
+        feed_url=feed_url
     )
 
 
-def add_feed(feeds: list[Feed]) -> None:
+def add_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
     logger.info("Add feed flow started")
 
     widgets.banner("ADD FEED", clear=True)
@@ -118,22 +112,26 @@ def add_feed(feeds: list[Feed]) -> None:
         return
 
     feeds.append(feed)
+    get_or_create_cache(feed_caches, feed)
     save_feeds(feeds)
+    save_feed_caches(feed_caches)
 
-    logger.info(f"Feed added: '{feed.name}' — {feed.url}")
+    logger.info(f"Feed added: '{feed.name}' ({feed.site_url}, {feed.feed_url})")
     widgets.text(f"Feed added: '{feed.name}'")
     time.sleep(PAUSE_SHORT)
 
 
 # ===== VIEW FEED =====
 
-def view_feed(feeds: list[Feed]) -> None:
+def view_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
     logger.info("View feed flow started")
 
     feed = input_feed_selection(feeds)
     if feed is None:
         return
+
+    feed_cache = get_or_create_cache(feed_caches, feed)
     
-    display_feed_data(feed)
+    display_feed_data(feed, feed_cache)
     widgets.blank()
     widgets.m_input("Press 'enter' to go back.")

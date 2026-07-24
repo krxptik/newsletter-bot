@@ -45,12 +45,6 @@ FEED_URL_HINT_RE = re.compile(
     r"feed$",
     re.IGNORECASE,
 )
-TRUNCATION_MARKERS = [
-    "continue reading",
-    "read more",
-    "read the full",
-    "[...]",
-]
 
 
 # ===== FEED DISCOVERY =====
@@ -78,81 +72,65 @@ def _probe_common_feed_paths(url: str) -> list[str]:
     return [base + path for path in COMMON_FEED_PATHS]
 
 
-def _check_url_and_feed(
+def _check_feed_url(
     url: str, session: requests.Session
-) -> tuple[requests.Response, feedparser.FeedParserDict] | None:
-    """Fetch url and parse it as a feed. Returns (response, feed) only if entries were found."""
+) -> requests.Response | None:
+    """Fetch url and parse it as a feed.
+
+    Returns (response, feed) if the URL resolves to a parseable feed.
+    If the feed has no entries, it is still accepted unless feedparser
+    reports a bozo parse error.
+    """
     response = safe_get(url, session)
     if response is None:
         return None
+
     feed = feedparser.parse(response.content)
-    if not feed.entries:
+    if feed.entries:
+        return response
+
+    if getattr(feed, "bozo", True):  # if not well formed, bozo is 1 (truthy). If bozo doesn't exist (missing XML parser), True.
         return None
-    return response, feed
+
+    return response
 
 
-# ===== SCRAPE DETECTION =====
-
-def _is_truncated(content: str) -> bool:
-    content_lower = content.lower()
-    if any(marker in content_lower for marker in TRUNCATION_MARKERS):
-        return True
-    return len(content.strip()) < 200
-
-
-def _is_scraping_required(feed) -> bool:  # no type hint: pylance mis-narrows `content` in _is_truncated if hinted here
-    sample = feed.entries[:3]
-    truncated = 0
-
-    for entry in sample:
-        content = ""
-
-        if hasattr(entry, "content"):
-            content = entry.content[0].value if entry.content else ""
-        elif hasattr(entry, "summary"):
-            content = entry.summary
-        elif hasattr(entry, "description"):
-            content = entry.description
-
-        if not content or _is_truncated(content):
-            truncated += 1
-
-    return truncated >= 2
+def _extract_site_url_from_feed(feed: feedparser.FeedParserDict) -> str | None:
+    """Extract the site URL from a parsed feed's metadata when available."""
+    feed_metadata = feed.feed
+    if isinstance(feed_metadata, dict):  # to make Pylance happy...
+        return feed_metadata.get("link")
+    return None
 
 
 # ===== RESOLUTION =====
 
-def resolve_feed(response: requests.Response, session: requests.Session) -> tuple[str, bool] | None:
-    """Try to resolve an already-fetched response into a usable RSS/Atom feed.
+def resolve_feed_urls(
+    response: requests.Response, session: requests.Session
+) -> tuple[str | None, str | None]:
+    """Resolve a response into the site URL and the best matching feed URL.
 
-    Checks the response directly, then scans it for a declared
-    <link rel="alternate"> feed, then tries common feed paths on the same
-    domain. Assumes `response` is already known to be reachable (fetched by
-    the caller); returns None if no feed can be found.
-
-    Returns:
-        (feed_url, scrape_required) — feed_url is the resolved feed URL;
-        scrape_required is True if the feed's entries look truncated and
-        full article content will need to be scraped separately.
+    The function checks the response directly, then scans it for a declared
+    <link rel="alternate"> feed, and finally tries common feed paths on the
+    same domain. It assumes the input response has already been fetched and
+    returns a pair of URLs: the site URL and the resolved feed URL.
     """
     # 1. Check if the response itself is already a valid feed
     feed = feedparser.parse(response.content)
     if feed.entries:
-        return response.url, _is_scraping_required(feed)
+        return _extract_site_url_from_feed(feed), response.url
 
-    # 2. Look for a declared feed in <head>
+    # 2. Look for a declared feed in <head>-
     declared_url = _find_declared_feed_url(response)
     if declared_url:
-        result = _check_url_and_feed(declared_url, session)
-        if result:
-            feed_response, feed = result
-            return feed_response.url, _is_scraping_required(feed)
+        feed_response = _check_feed_url(declared_url, session)
+        if feed_response:
+            return response.url, feed_response.url
 
     # 3. Try common paths
     for candidate in _probe_common_feed_paths(response.url):
-        result = _check_url_and_feed(candidate, session)
-        if result:
-            feed_response, feed = result
-            return feed_response.url, _is_scraping_required(feed)
+        feed_response = _check_feed_url(candidate, session)
+        if feed_response:
+            return response.url, feed_response.url
 
-    return None
+    return response.url, None
