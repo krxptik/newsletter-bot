@@ -5,15 +5,15 @@ from enum import Enum, auto
 
 from tqdm import tqdm
 
-from path_config import AI_PROMPTS_DIR
+from path_config import ENRICH_PROMPTS_DIR
 from models import Article
-from app.enrich.retry import safe_prompt
+from shared.ai_utils import safe_prompt
 from shared.ai_client import AIClient
 from shared.exceptions import InsufficientQuotaError
 
 logger = logging.getLogger(__name__)
 
-ARTICLE_PROMPT_FILE = AI_PROMPTS_DIR / "article_prompt.txt"
+ARTICLE_PROMPT_FILE = ENRICH_PROMPTS_DIR / "article_prompt.txt"
 NEWSLETTER_REQUESTS = 1
 BATCH_SIZE = 5
 

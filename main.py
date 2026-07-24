@@ -15,9 +15,9 @@ from shared.ai_client import GemmaClient # current model
 from version import __version__
 
 # Local — app
-from app.persistence import backfill_site_urls, save_used_urls
+from app.persistence import load_feeds_with_caches, match_feeds_to_caches, save_used_urls
 from app.bootstrap import start_initialisation
-from app.ingest.main_parser import parse_all
+from app.ingest.orchestrator import parse_all
 from app.filter.article_limit import retrieve_article_limit
 from app.filter.filter_articles import filter_articles
 from app.enrich.article_enricher import process_articles
@@ -48,10 +48,11 @@ def main():
         widgets.banner_figlet("ellie!")
 
         # --- Ingest ---
-        feeds = backfill_site_urls()
+        feeds, caches = load_feeds_with_caches()
+        matched = match_feeds_to_caches(feeds, caches)
         logger.info(f"Loaded {len(feeds)} feeds")
         with requests.Session() as session:
-            articles = parse_all(feeds, session)
+            articles = parse_all(matched, session, ai_client)
         logger.info(f"Fetched {len(articles)} articles")
 
         # --- Filter and Prune ---

@@ -1,13 +1,15 @@
-from path_config import AI_PROMPTS_DIR
-from models import Article
-from app.enrich.retry import safe_prompt
-from app.enrich.article_enricher import AIParsingError
-from shared.ai_client import AIClient
 import logging
+
+from path_config import ENRICH_PROMPTS_DIR
+from .article_enricher import AIParsingError
+from models import Article
+from shared.ai_utils import safe_prompt
+from shared.ai_client import AIClient
+
 
 logger = logging.getLogger(__name__)
 
-NEWSLETTER_PROMPT_FILE = AI_PROMPTS_DIR / "newsletter_prompt.txt"
+NEWSLETTER_PROMPT_FILE = ENRICH_PROMPTS_DIR / "newsletter_prompt.txt"
 
 FALLBACK_TITLE = "Newsletter"
 FALLBACK_SUMMARY = "Generated automatically"

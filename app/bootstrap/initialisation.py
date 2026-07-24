@@ -2,16 +2,14 @@ import logging
 
 from ._setup_wizard import run_setup_wizard
 from ._settings_menu import run_main_menu
-
-from models.config import Config
-
+from app.persistence import load_config
 
 logger = logging.getLogger(__name__)
 
 
 def start_initialisation() -> None:
     logger.info("Starting initialisation")
-    config = Config.load()
+    config = load_config()
 
     if config.is_complete():
         logger.info("Config complete — skipping setup wizard")

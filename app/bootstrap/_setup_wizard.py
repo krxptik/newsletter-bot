@@ -7,6 +7,7 @@ from .sender import run_sender_setup
 from .feed import run_feed_manager
 from .recipient import run_recipient_manager
 
+from app.persistence import save_config
 from models.config import Config
 from shared.ui import widgets, PAUSE_SHORT
 from shared.prompts import confirmation
@@ -50,7 +51,7 @@ def run_setup_wizard(config: Config) -> None:
     env_vars = run_ai_setup(env_vars)
     write_env(env_vars)
     config.ai_ready = True
-    config.update_config()
+    save_config(config)
     logger.info("AI setup complete")
 
     widgets.banner("SETUP WIZARD", clear=True)
@@ -65,7 +66,7 @@ def run_setup_wizard(config: Config) -> None:
     env_vars = run_sender_setup(env_vars)
     write_env(env_vars)
     config.sender_ready = True
-    config.update_config()
+    save_config(config)
     logger.info("Sender setup complete")
 
     widgets.banner("SETUP WIZARD", clear=True)

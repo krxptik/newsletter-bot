@@ -6,6 +6,7 @@ from .feed import run_feed_manager
 from .recipient import run_recipient_manager
 from .sender import run_sender_settings
 
+from app.persistence import refresh_dynamic_flags, save_config
 from models.config import Config
 from shared.ui import widgets, screen
 from shared.prompts import select
@@ -65,6 +66,7 @@ def _handle_settings_input(option: int | None) -> State:
             run_feed_manager()
         case 3:
             run_recipient_manager()
+            
         case 4:
             return State.MAIN
     return State.SETTINGS
@@ -77,6 +79,7 @@ def run_main_menu(config: Config) -> None:
     while state is not None:
         options = MENU_OPTIONS[state]
         if state == State.MAIN:
+            refresh_dynamic_flags(config)
             _display_menu("ellie!", options, config)
             widgets.blank()
             state = _handle_main_input(select(options))
