@@ -33,8 +33,9 @@ def render_feed_section(pager: Pager, options: list[str]) -> None:
     widgets.blank()
     widgets.options_menu(
         options,
-        footer="[N] Next page / [P] Previous page" if pager.max_page > 1 else None,
+        footer="[<] / [>] to navigate feeds" if pager.max_page > 1 else None,
     )
+    widgets.blank()
 
 
 def render_remove_section(pager: Pager) -> None:

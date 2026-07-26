@@ -1,7 +1,6 @@
 from ._ask import ask
 from ._confirmation import confirmation
-from ._navigation import Navigation
-from ._selection import select, select_item, select_with_pagination, SelectionResult
+from ._selection import select, select_item, select_with_pagination, SelectionResult, PaginationSelectResult, Navigation
 
 __all__ = [
     "ask",
@@ -10,5 +9,6 @@ __all__ = [
     "select",
     "select_item",
     "select_with_pagination",
-    "SelectionResult"
+    "SelectionResult",
+    "PaginationSelectResult"
 ]

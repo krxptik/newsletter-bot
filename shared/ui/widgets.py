@@ -5,6 +5,10 @@ Composes screen primitives and text transforms into semantic UI pieces
 (banners, menus, lists) and enforces the one thing worth centralizing:
 that written output is wrapped and margined by default.
 """
+import io
+import sys
+from contextlib import contextmanager, redirect_stdout
+from itertools import zip_longest
 
 from . import constants, screen
 from .text import format_block, wrap_text, dot_leader_line, label_line, apply_margin, tree_lines
@@ -12,18 +16,44 @@ from .text import format_block, wrap_text, dot_leader_line, label_line, apply_ma
 
 # ===== OUTPUT GATEWAY =====
 
-def write(text: str = "", *, wrap: bool = True, margin: bool = True,
-          justify: str = "left", end: str = "\n") -> None:
-    if wrap or margin:
+def write(
+        text: str = "", *, 
+        wrap: bool = True, 
+        margin: bool = True, justify: str = "left", end: str = "\n",
+        width: int = constants.CONTENT_WIDTH, center_margin: int = constants.CENTER_MARGIN,
+        overflow: str | None = None) -> None:
+
+    render_margin = constants.MARGIN if margin else 0
+
+    if overflow == "truncate":
         text = format_block(
             text,
-            width=constants.CONTENT_WIDTH,
+            width=width,
+            wrap=False,
+            truncate_lines=True,
+            justify=justify,
+            margin=render_margin,
+        )
+    elif overflow == "wrap":
+        text = format_block(
+            text,
+            width=width,
+            wrap=True,
+            truncate_lines=False,
+            justify=justify,
+            margin=render_margin,
+        )
+    elif wrap or margin:
+        text = format_block(
+            text,
+            width=width,
             wrap=wrap,
             justify=justify,
-            margin=constants.MARGIN if margin else 0,
+            margin=render_margin
         )
-    if constants.CENTER_MARGIN:
-        text = apply_margin(text, constants.CENTER_MARGIN)
+
+    if center_margin:
+        text = apply_margin(text, center_margin)
     print(text, end=end)
 
 
@@ -40,6 +70,43 @@ def m_input(prompt: str = ""):
     response = input(apply_margin(prompt, constants.MARGIN + constants.CENTER_MARGIN))
     blank()
     return response
+
+
+# ===== TWO-PANEL PRINTING =====
+
+@contextmanager
+def capture_panel():
+    module = sys.modules[__name__]
+    # use getattr/setattr to avoid static-analysis complaints about
+    # assigning unknown attributes on ModuleType objects
+    old_write = getattr(module, "write")
+    old_divider = getattr(screen, "divider")
+    buffer = io.StringIO()
+
+    def tc_write(text: str = "", **kwargs):
+        kwargs["width"] = constants.TC_CONTENT_WIDTH
+        kwargs["center_margin"] = constants.TC_CENTER_MARGIN
+        return old_write(text, **kwargs)
+
+    def tc_divider(width: int = constants.TC_WIDTH):
+        return old_divider(width)
+
+    setattr(module, "write", tc_write)
+    setattr(screen, "divider", tc_divider)
+    try:
+        with redirect_stdout(buffer):
+            yield buffer
+    finally:
+        setattr(module, "write", old_write)
+        setattr(screen, "divider", old_divider)
+
+
+def two_panels(left_panel: list[str], right_panel: list[str], *, gap: int = 0) -> None:
+    panel_width = constants.TC_WIDTH
+
+    for left_text, right_text in zip_longest(left_panel, right_panel, fillvalue=""):
+        row = left_text.ljust(panel_width) + (" " * gap) + right_text
+        write(row, wrap=False, margin=False)
 
 
 # ===== WIDGETS =====
@@ -99,7 +166,7 @@ def section_header(title: str) -> None:
 
 
 def tree_list(sections: list[tuple[str, list[str]]], *, max_children: int = 5,
-                  empty_message: str = "Nothing to show.") -> None:
+              empty_message: str = "Nothing to show.") -> None:
     """Render a sequence of tree-connected header+children blocks. Not
     address-book-specific — anywhere a 'header + nested detail lines' shape
     shows up (group rosters, feed lists with sub-detail, etc)."""
@@ -110,7 +177,13 @@ def tree_list(sections: list[tuple[str, list[str]]], *, max_children: int = 5,
     write("\n\n".join(blocks), wrap=False)
 
 
-def label_block(labels: list[str], values: list[str], *, sep: str = "", empty_message: str = "Nothing to show."):
+def label_block(
+        labels: list[str], 
+        values: list[str], 
+        *, 
+        sep: str = "", 
+        empty_message: str = "Nothing to show.", 
+        overflow: str | None = None) -> None:
     if not labels or not values:
         text(empty_message)
         return
@@ -118,15 +191,21 @@ def label_block(labels: list[str], values: list[str], *, sep: str = "", empty_me
     lines = [label_line(label, value, constants.CONTENT_WIDTH, 
                         sep=sep, label_width=label_width) 
              for label, value in zip(labels, values)]
-    write("\n".join(lines))
+    write("\n".join(lines), overflow=overflow)
 
 
-def enumerated_list(start: int, values: list, empty_message: str = "Nothing to show."):
+def enumerated_list(
+        start: int, 
+        values: list[str], 
+        *, 
+        empty_message: str = "Nothing to show.", 
+        letters: bool = True, 
+        overflow: str | None = None) -> None:
     if not values:
         text(empty_message)
         return
-    labels = [f"[{i}]" for i in range(start, start + len(values))]
-    label_block(labels, values)
+    labels = [f"[{chr(ord('A') + i) if letters else i}]" for i in range(start, start + len(values))]
+    label_block(labels, values, overflow=overflow)
 
 
 # ===== PROGRESS DISPLAY =====

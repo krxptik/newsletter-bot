@@ -17,16 +17,13 @@ from version import __version__
 # Local — app
 from app.persistence import load_feeds_with_caches, match_feeds_to_caches, save_used_urls
 from app.bootstrap import start_initialisation
-from app.ingest.orchestrator import parse_all
-from app.filter.article_limit import retrieve_article_limit
-from app.filter.filter_articles import filter_articles
-from app.enrich.article_enricher import process_articles
-from app.enrich.newsletter_composer import generate_newsletter_metadata
-from app.selection.menu import menu
-from app.compose.context_builder import generate_context
-from app.render.render import render_newsletter, save_newsletter, preview_newsletter
-from app.deliver.send_menu import send_menu
-from app.deliver.send import send_email
+from app.ingest import parse_all
+from app.filter import filter_articles
+from app.enrich import process_articles, generate_newsletter_metadata
+from app.selection import run_selection_menu
+from app.compose import generate_context
+from app.render import render_newsletter, save_newsletter, preview_newsletter
+from app.deliver import send_menu, send_email
 
 
 setup_logging()
@@ -51,13 +48,11 @@ def main():
         feeds, caches = load_feeds_with_caches()
         matched = match_feeds_to_caches(feeds, caches)
         logger.info(f"Loaded {len(feeds)} feeds")
-        with requests.Session() as session:
-            articles = parse_all(matched, session, ai_client)
+        articles = parse_all(matched, ai_client)
         logger.info(f"Fetched {len(articles)} articles")
 
         # --- Filter and Prune ---
-        limit = retrieve_article_limit(ai_client)
-        articles = filter_articles(articles, limit)
+        articles = filter_articles(articles, ai_client, 1)
         logger.info(f"After pruning: {len(articles)} articles remain")
 
         # --- AI processing ---
@@ -67,7 +62,7 @@ def main():
 
         # --- Article selection ---
         logger.info("Opening article selection menu...")
-        selected_articles = menu(enriched_articles)
+        selected_articles = run_selection_menu(enriched_articles)
         logger.info(f"User selected {len(selected_articles)} articles")
 
         # --- Newsletter generation ---

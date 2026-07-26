@@ -39,8 +39,11 @@ def display_ungrouped(book: AddressBook, clear=False) -> None:
     widgets.blank()
 
 
-def display_address_book(book: AddressBook) -> None:
+def display_address_book(book: AddressBook, options: list) -> None:
     screen.clear()
     display_groups(book)
     display_ungrouped(book)
     screen.divider()
+    widgets.blank()
+    widgets.options_menu(options)
+    widgets.blank()

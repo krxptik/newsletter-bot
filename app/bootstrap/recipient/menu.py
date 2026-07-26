@@ -48,10 +48,7 @@ def run_recipient_manager() -> None:
     ]
 
     while True:
-        display_address_book(book)
-        widgets.blank()
-        widgets.options_menu(options)
-        widgets.blank()
+        display_address_book(book, options)
 
         user_input = select(options)
         should_exit = _handle_user_input(user_input, book)

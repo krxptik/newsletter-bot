@@ -30,7 +30,7 @@ def remove_feed(pager: Pager, feeds: list[Feed], feed_caches: list[FeedCache]) -
 
     render_remove_section(pager)
 
-    feed_to_remove = input_feed_selection(feeds)
+    feed_to_remove = input_feed_selection(pager)
     if feed_to_remove is None:
         return
 
@@ -123,10 +123,10 @@ def add_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
 
 # ===== VIEW FEED =====
 
-def view_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
+def view_feed(pager: Pager, feed_caches: list[FeedCache]) -> None:
     logger.info("View feed flow started")
 
-    feed = input_feed_selection(feeds)
+    feed = input_feed_selection(pager)
     if feed is None:
         return
 

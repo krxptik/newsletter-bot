@@ -1,24 +1,16 @@
 import logging
-from enum import Enum, auto
-from pathlib import Path
-from email.message import EmailMessage
 import os
 import time
+from email.message import EmailMessage
+from pathlib import Path
 
-from shared.terminal import clear_terminal, divider, display_banner, label_line
-from shared.ui import widgets
-from app.render.render import preview_newsletter
 from app.persistence import load_address_book
-from app.bootstrap.recipient_manager import run_recipient_manager
+from app.render import preview_newsletter
+from shared.ui import screen, widgets
+
+from ._state import State
 
 logger = logging.getLogger(__name__)
-
-
-class State(Enum):
-    MAIN = auto()
-    EDIT = auto()
-    MANAGE_RECIPIENTS = auto()
-    ADDRESS_BOOK = auto()
 
 
 class MenuHandler:
@@ -31,31 +23,27 @@ class MenuHandler:
         self.addrs_names = {
             "To": [],
             "Cc": [],
-            "Bcc": []
+            "Bcc": [],
         }
 
         data = load_address_book()
         self.groups = data.get("groups", {})
         self.ungrouped = data.get("ungrouped", [])
 
-        self.em['Subject'] = subject
-        self.em['From'] = os.getenv("EMAIL_ADDRESS")
+        self.em["Subject"] = subject
+        self.em["From"] = os.getenv("EMAIL_ADDRESS")
         self.em.set_content(
             "This email contains HTML elements. "
             "If you are seeing this, the email is not loading properly. "
             "Please view this in a proper email client."
         )
-        self.em.add_alternative(html, subtype='html')
-
-    # --- Reload address book after external edits ---
+        self.em.add_alternative(html, subtype="html")
 
     def _reload_address_book(self) -> None:
         data = load_address_book()
         self.groups = data.get("groups", {})
         self.ungrouped = data.get("ungrouped", [])
         logger.debug("Address book reloaded into send menu handler")
-
-    # --- Main menu ---
 
     def handle_main_input(self, user_input: str) -> None:
         if not user_input.isdigit():
@@ -66,12 +54,10 @@ class MenuHandler:
         elif option == 2:
             preview_newsletter(self.path)
         elif option == 3:
-            if self.em.get('Subject') and self.em.get('From') and len(self.to_addrs) > 0:
+            if self.em.get("Subject") and self.em.get("From") and len(self.to_addrs) > 0:
                 self.state = None
             else:
-                self._show_error('Necessary email details empty, please fill them in.')
-
-    # --- Edit menu ---
+                self._show_error("Necessary email details empty, please fill them in.")
 
     def handle_edit_input(self, user_input: str) -> None:
         if not user_input.isdigit():
@@ -80,7 +66,7 @@ class MenuHandler:
         if option == 1:
             new = widgets.m_input("New subject: ").strip()
             if new:
-                self._set_header('Subject', new)
+                self._set_header("Subject", new)
         elif option == 2:
             self.current_recipient_type = "To"
             self.state = State.MANAGE_RECIPIENTS
@@ -93,29 +79,26 @@ class MenuHandler:
         elif option == 5:
             self.state = State.MAIN
 
-    # --- Recipient management menu ---
-
     def handle_recipient_input(self, user_input: str) -> None:
         if not user_input.isdigit():
             return
         option = int(user_input)
         if self.current_recipient_type is None:
             return
-        rt = self.current_recipient_type
+
+        recipient_type = self.current_recipient_type
         if option == 1:
-            self._add_individual(rt)
+            self._add_individual(recipient_type)
         elif option == 2:
-            self._add_group(rt)
+            self._add_group(recipient_type)
         elif option == 3:
-            self._remove_individual(rt)
+            self._remove_individual(recipient_type)
         elif option == 4:
-            self._remove_group(rt)
+            self._remove_group(recipient_type)
         elif option == 5:
             self.state = State.ADDRESS_BOOK
         elif option == 6:
             self.state = State.EDIT
-
-    # --- Add / remove ---
 
     def _add_individual(self, recipient_type: str) -> None:
         email = widgets.m_input("Email address to add: ").strip()
@@ -125,7 +108,7 @@ class MenuHandler:
             self._show_error(f"'{email}' is already a recipient.")
             return
         self.addrs_names[recipient_type].append(email)
-        self._set_header(recipient_type, ', '.join(self.addrs_names[recipient_type]))
+        self._set_header(recipient_type, ", ".join(self.addrs_names[recipient_type]))
         self.to_addrs.add(email)
 
     def _add_group(self, recipient_type: str) -> None:
@@ -140,7 +123,7 @@ class MenuHandler:
             self._show_error(f"Group '{name}' already in {recipient_type}.")
             return
         self.addrs_names[recipient_type].append(name)
-        self._set_header(recipient_type, ', '.join(self.addrs_names[recipient_type]))
+        self._set_header(recipient_type, ", ".join(self.addrs_names[recipient_type]))
         self.to_addrs.update(addrs)
 
     def _remove_individual(self, recipient_type: str) -> None:
@@ -148,7 +131,7 @@ class MenuHandler:
         if email in self.to_addrs:
             self.to_addrs.remove(email)
             self.addrs_names[recipient_type].remove(email)
-            self._set_header(recipient_type, ', '.join(self.addrs_names[recipient_type]))
+            self._set_header(recipient_type, ", ".join(self.addrs_names[recipient_type]))
         else:
             self._show_error(f"'{email}' not found in {recipient_type}.")
 
@@ -163,12 +146,10 @@ class MenuHandler:
             return
         self.to_addrs -= set(addrs)
         self.addrs_names[recipient_type].remove(name)
-        self._set_header(recipient_type, ', '.join(self.addrs_names[recipient_type]))
-
-    # --- Helpers ---
+        self._set_header(recipient_type, ", ".join(self.addrs_names[recipient_type]))
 
     def _show_error(self, message: str) -> None:
-        clear_terminal()
+        screen.clear()
         print(message)
         print("\nReturning to menu in 3 seconds...")
         time.sleep(3)
@@ -178,85 +159,3 @@ class MenuHandler:
             self.em.replace_header(header, value)
         else:
             self.em[header] = value
-
-
-# ===== DISPLAY =====
-
-def _display_address_book(groups: dict, ungrouped: list) -> None:
-    print("Address book:")
-    if groups:
-        for name, members in groups.items():
-            print(f"  [{name}] — {len(members)} member(s)")
-            for m in members:
-                print(f"    - {m}")
-    else:
-        print("  (no groups)")
-
-    if ungrouped:
-        print("\n  Ungrouped:")
-        for addr in ungrouped:
-            print(f"    - {addr}")
-    else:
-        print("  (no ungrouped recipients)")
-
-    divider(spacing=True)
-
-
-def display_details(em: EmailMessage) -> None:
-    clear_terminal()
-    display_banner("EMAIL DETAILS")
-    print()
-    print(label_line("Subject:", str(em.get('Subject'))))
-    print(label_line("From:", str(em.get('From'))))
-    print(label_line("To:", str(em.get('To'))))
-    print(label_line("Cc:", str(em.get('Cc'))))
-    print(label_line("Bcc:", str(em.get('Bcc'))))
-    divider(spacing=True)
-
-
-# ===== ENTRY POINT =====
-
-def send_menu(subject: str, path: Path, html: str):
-    handler = MenuHandler(subject, path, html)
-
-    while handler.state is not None:
-        clear_terminal()
-
-        if handler.state == State.MAIN:
-            display_details(handler.em)
-            print("\nOptions:")
-            print("  (1) Edit details")
-            print("  (2) Preview HTML")
-            print("  (3) Submit and send")
-            handler.handle_main_input(widgets.m_input("> ").strip())
-
-        elif handler.state == State.EDIT:
-            display_details(handler.em)
-            print("\nOptions:")
-            print("  (1) Edit subject")
-            print("  (2) Manage To")
-            print("  (3) Manage Cc")
-            print("  (4) Manage Bcc")
-            print("  (5) Back")
-            handler.handle_edit_input(widgets.m_input("> ").strip())
-
-        elif handler.state == State.MANAGE_RECIPIENTS:
-            display_details(handler.em)
-            _display_address_book(handler.groups, handler.ungrouped)
-            print(f"Managing: {handler.current_recipient_type}")
-            print("\nOptions:")
-            print("  (1) Add individual")
-            print("  (2) Add group")
-            print("  (3) Remove individual")
-            print("  (4) Remove group")
-            print("  (5) Edit address book")
-            print("  (6) Back")
-            handler.handle_recipient_input(widgets.m_input("> ").strip())
-
-        elif handler.state == State.ADDRESS_BOOK:
-            run_recipient_manager(title="EDIT ADDRESS BOOK")
-            time.sleep(3)
-            handler._reload_address_book()
-            handler.state = State.MANAGE_RECIPIENTS
-
-    return (handler.em, list(handler.to_addrs))

@@ -100,24 +100,25 @@ from shared.ai_client import AIClient
 logger = logging.getLogger(__name__)
 
 
-def parse_all(feeds: list[tuple[Feed, FeedCache]], session: requests.Session, client: AIClient) -> list[Article]:
+def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Article]:
     """Parse all feeds and return a flat list of recent Article objects."""
     logger.info(f"parse_all: parsing {len(feeds)} feeds")
 
-    articles = []
-    for feed_obj, cache in tqdm(
-        zip(*feeds),
-        desc="Feed parsing",
-        unit="feed",
-        bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]"
-    ):
-        result = _parse_feed(feed_obj, cache, session, client)
-        if result:
-            articles.extend(result)
-        cache.mark_parsed(success=(result is not None))
+    with requests.Session() as session:
+        articles = []
+        for feed_obj, cache in tqdm(
+            feeds,
+            desc="Feed parsing",
+            unit="feed",
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]"
+        ):
+            result = _parse_feed(feed_obj, cache, session, client)
+            if result:
+                articles.extend(result)
+            cache.mark_parsed(success=(result is not None))
 
-    logger.info(f"{len(articles)} total articles across {len(feeds)} feeds")
-    return articles
+        logger.info(f"{len(articles)} total articles across {len(feeds)} feeds")
+        return articles
 
 
 def _parse_feed(feed_obj: Feed, cache: FeedCache, session: requests.Session, client: AIClient) -> list[Article] | None:

@@ -1,6 +1,0 @@
-from shared.terminal import WIDTH
-
-LIST_SPACING = 4
-LIST_NO_WIDTH = 5
-LIST_WIDTH = (WIDTH - LIST_SPACING) // 2
-ARTICLES_PER_PAGE = 10

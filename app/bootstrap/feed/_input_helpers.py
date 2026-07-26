@@ -8,6 +8,7 @@ from models import Feed
 from shared.prompts import ask, select_item, SelectionResult
 from shared.ui import widgets, PAUSE_SHORT
 from shared.safe_request import safe_get
+from shared.pager import Pager
 
 
 # ===== add_feed INPUT =====
@@ -56,16 +57,16 @@ def input_name() -> str | None:
 
 # ===== remove_feed INPUT =====
 
-def input_feed_selection(feeds: list[Feed]) -> Feed | None:
+def input_feed_selection(pager: Pager) -> Feed | None:
     while True:
-        result = select_item(feeds, prompt="Enter feed number", cancel_word="back")
-
-        if isinstance(result, int):
-            return feeds[result]
+        result = select_item(*pager.get_page_items(), prompt="Enter feed number", cancel_word="back")
         
-        if result == SelectionResult.CANCELLED:
-            return
-        
-        widgets.blank()
-        widgets.text("ERROR: Invalid input.")
-        time.sleep(PAUSE_SHORT)
+        match result:
+            case SelectionResult.CANCELLED:
+                return
+            case SelectionResult.INVALID:
+                widgets.blank()
+                widgets.text("ERROR: Invalid input.")
+                time.sleep(PAUSE_SHORT)
+            case _:
+                return result
