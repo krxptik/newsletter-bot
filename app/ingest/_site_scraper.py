@@ -1,10 +1,14 @@
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import trafilatura
 from bs4 import BeautifulSoup
 
 from ._extraction_utils import normalise_trafilatura_result, enrich_extraction_with_ai
 from ._ai_fallback import ai_extract
+from ._concurrency import domain_semaphore
+from ._session_pool import get_session
+from ._constants import SCRAPE_WORKERS
 
 from models import Feed, Article
 from shared.safe_request import safe_get
@@ -22,19 +26,23 @@ def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: AICli
     candidates = _junk_filtered_links(soup, feed_obj.site_url)
 
     articles: list[Article] = []
-    for link in candidates:
-        article = _article_from_link(link, feed_obj, session, client)
-        if article is None:
-            continue
-
-        if article.is_recent():
-            articles.append(article)
+    with ThreadPoolExecutor(max_workers=SCRAPE_WORKERS) as executor:
+        futures = {
+            executor.submit(_article_from_link, link, feed_obj, client): link
+            for link in candidates
+        }
+        for future in as_completed(futures):
+            article = future.result()
+            if article and article.is_recent():
+                articles.append(article)
 
     return articles  # [] if nothing found — treated as benign, not a failure
 
 
-def _article_from_link(link: str, feed_obj: Feed, session: requests.Session, client: AIClient) -> Article | None:
-    resp = safe_get(link, session)
+def _article_from_link(link: str, feed_obj: Feed, client: AIClient) -> Article | None:
+    with domain_semaphore(link):
+        resp = safe_get(link, get_session())
+
     if resp is None:
         return None
 

@@ -2,7 +2,6 @@
 import logging
 
 # Third-party
-import requests
 from dotenv import load_dotenv
 
 # Local — shared utilities

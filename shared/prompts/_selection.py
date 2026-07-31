@@ -1,7 +1,14 @@
+from collections.abc import Sequence
 from enum import Enum, auto
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple, TypeVar, overload
 
 from ._ask import ask
+from shared.pager import Pager
+
+
+PrimaryItem = TypeVar("PrimaryItem")
+SecondaryItem = TypeVar("SecondaryItem")
+PageItem = TypeVar("PageItem")
 
 
 class SelectionResult(Enum):
@@ -20,32 +27,16 @@ class PaginationSelectResult(NamedTuple):
     navigation: Navigation | None = None
 
 
-def _parse_selection(raw: str, num_options: int) -> int | None:
-    """
-    Parse a numeric selection displayed to the user as 1-indexed.
-
-    Returns the zero-based index if valid, otherwise None.
-    """
-    if not raw.isdigit():
-        return None
-
-    idx = int(raw) - 1
-
-    if 0 <= idx < num_options:
-        return idx
-
-    return None
-
-
 def select(
-    options: list,
+    options: Sequence[Any],
     *,
     prompt: str = "",
 ) -> int | None:
     """
-    Prompt for a numeric selection against `options` (1-indexed on screen).
+    Prompt for a 1-indexed numeric selection against `options`.
 
-    Returns the zero-based index into `options`, or None if invalid.
+    Returns the zero-based index into `options`, or None if the input is not a
+    valid number for the current option list.
     """
     raw = ask(prompt)
 
@@ -55,71 +46,67 @@ def select(
     return _parse_selection(raw, len(options))
 
 
-def _parse_item_selection(
-        raw: str, 
-        primary: list,
-        p_start: int = 1,
-        secondary: list | None = None,
-        s_start: str = "A") -> Any | None:
-    """
-    Parse a 1-indexed numeric or alphabetic selection.
+@overload
+def select_item(
+    primary: Pager[PrimaryItem],
+    secondary: None,
+    prompt: str = "",
+    cancel_word: str | None = None,
+    letters: bool = False,
+) -> PrimaryItem | SelectionResult:
+    ...
 
-    Returns the zero-based index if valid, otherwise None.
-    """
-    if raw.isdigit():
-        idx = int(raw) - p_start
 
-        if 0 <= idx < len(primary):
-            return primary[idx]
-
-    elif raw.isalpha() and len(raw) == 1:
-        if not secondary:
-            return None 
-        
-        idx = ord(raw.upper()) - ord(s_start.upper())
-
-        if 0 <= idx < len(secondary):
-            return secondary[idx]
-
-    return None
+@overload
+def select_item(
+    primary: Pager[PrimaryItem],
+    secondary: Pager[SecondaryItem],
+    prompt: str = "",
+    cancel_word: str | None = None,
+    letters: bool = False,
+) -> PrimaryItem | SecondaryItem | SelectionResult:
+    ...
 
 
 def select_item(
-    primary: list,
-    primary_start: int = 0,
-    secondary: list | None = None,
-    secondary_start: str = "A",
+    primary: Pager[Any],
+    secondary: Pager[Any] | None,
     prompt: str = "",
     cancel_word: str | None = None,
+    letters: bool = False,
 ) -> Any | SelectionResult:
     """
     Prompt for a primary or secondary selection with optional cancellation.
 
-    `primary` is selected by number starting at `primary_start` on screen.
-    When `secondary` is provided, alphabetic selections starting at
-    `secondary_start` map to that list.
+    In single-list mode, `primary` can be selected by number or, when
+    `letters=True`, by letter.
+
+    In dual-list mode, numbers map to `primary` and letters map to `secondary`.
 
     Returns:
 
     - the selected item from `primary` or `secondary`
     - SelectionResult.CANCELLED when the user types `cancel_word`
-    - SelectionResult.INVALID for invalid input
+    - SelectionResult.INVALID for invalid input or out-of-range selection
     """
     raw = ask(prompt, cancel_word=cancel_word)
-
     if raw is None:
         return SelectionResult.CANCELLED
 
-    parsed = _parse_item_selection(
-        raw, 
-        primary, primary_start, 
-        secondary, secondary_start
-    )
+    primary_items, primary_start = primary.get_page_items()
 
-    if parsed is None:
-        return SelectionResult.INVALID
+    if secondary is None:
+        # Single-list mode: use the caller's chosen numeric or alphabetic mode.
+        return _select_from_page_items(raw, primary_items, primary_start, letters=letters)
 
-    return parsed
+    secondary_items, secondary_start = secondary.get_page_items()
+
+    # Dual-list mode: numbers select from the primary list.
+    if raw.isdigit():
+        return _select_from_page_items(raw, primary_items, primary_start, letters=False)
+
+    # Dual-list mode: letters select from the secondary list.
+    return _select_from_page_items(raw, secondary_items, secondary_start, letters=True)
 
 
 def select_with_pagination(
@@ -163,5 +150,54 @@ def select_with_pagination(
         idx = _parse_selection(raw, len(options))
         if idx is not None:
             return PaginationSelectResult(item_index=idx)
+
+    return None
+
+
+def _select_from_page_items(
+    raw: str,
+    items: list[PageItem],
+    start: int,
+    *,
+    letters: bool,
+) -> PageItem | SelectionResult:
+    """
+    Resolve a raw response against a single pager page.
+
+    Returns the selected page item or SelectionResult.INVALID if the response
+    cannot be mapped to an item on the current page.
+    """
+    # Numeric mode uses 1-indexed list positions from the current page.
+    if not letters:
+        if not raw.isdigit():
+            return SelectionResult.INVALID
+
+        idx = int(raw) - start - 1
+    # Letter mode maps A, B, C... to the current page offset.
+    else:
+        if not (raw.isalpha() and len(raw) == 1):
+            return SelectionResult.INVALID
+
+        idx = ord(raw.upper()) - ord("A") - start
+
+    if 0 <= idx < len(items):
+        return items[idx]
+
+    return SelectionResult.INVALID
+
+
+def _parse_selection(raw: str, num_options: int) -> int | None:
+    """
+    Parse a numeric selection displayed to the user as 1-indexed.
+
+    Returns the zero-based index if valid, otherwise None.
+    """
+    if not raw.isdigit():
+        return None
+
+    idx = int(raw) - 1
+
+    if 0 <= idx < num_options:
+        return idx
 
     return None

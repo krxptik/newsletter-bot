@@ -23,10 +23,8 @@ def _handle_user_input(
 
     if user_input.navigation is not None:
         match user_input.navigation:
-            case Navigation.NEXT:
-                pager.next_page()
-            case Navigation.PREV:
-                pager.prev_page()
+            case Navigation.NEXT: pager.next_page()
+            case Navigation.PREV: pager.prev_page()
         return False
 
     match user_input.item_index:

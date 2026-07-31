@@ -30,7 +30,7 @@ def refresh_dynamic_flags(config: Config) -> None:
     """Recompute feeds_ready/recipients_ready from current data — no staleness possible."""
     config.feeds_ready = bool(load_feeds())
     book = load_address_book()
-    config.recipients_ready = bool(book.get("groups") or book.get("ungrouped"))
+    config.recipients_ready = bool(book)
 
 
 def save_config(config: Config) -> None:

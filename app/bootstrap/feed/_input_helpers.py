@@ -59,7 +59,7 @@ def input_name() -> str | None:
 
 def input_feed_selection(pager: Pager) -> Feed | None:
     while True:
-        result = select_item(*pager.get_page_items(), prompt="Enter feed number", cancel_word="back")
+        result = select_item(pager, None, prompt="Enter feed number", cancel_word="back")
         
         match result:
             case SelectionResult.CANCELLED:

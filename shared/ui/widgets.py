@@ -7,10 +7,13 @@ that written output is wrapped and margined by default.
 """
 import io
 import sys
+import time
+from tqdm import tqdm as _tqdm
 from contextlib import contextmanager, redirect_stdout
 from itertools import zip_longest
 
 from . import constants, screen
+from .text import _blocks as text_blocks
 from .text import format_block, wrap_text, dot_leader_line, label_line, apply_margin, tree_lines
 
 
@@ -81,6 +84,9 @@ def capture_panel():
     # assigning unknown attributes on ModuleType objects
     old_write = getattr(module, "write")
     old_divider = getattr(screen, "divider")
+    old_screen_apply_margin = getattr(screen, "apply_margin")
+    old_apply_margin = getattr(module, "apply_margin")
+    old_text_apply_margin = getattr(text_blocks, "apply_margin")
     buffer = io.StringIO()
 
     def tc_write(text: str = "", **kwargs):
@@ -89,20 +95,31 @@ def capture_panel():
         return old_write(text, **kwargs)
 
     def tc_divider(width: int = constants.TC_WIDTH):
-        return old_divider(width)
+        return old_divider(width, constants.TC_CENTER_MARGIN)
+
+    def tc_apply_margin(text: str, margin: int = constants.TC_CENTER_MARGIN):
+        return old_apply_margin(text, margin)
 
     setattr(module, "write", tc_write)
     setattr(screen, "divider", tc_divider)
+    setattr(screen, "apply_margin", tc_apply_margin)
+    setattr(module, "apply_margin", tc_apply_margin)
+    setattr(text_blocks, "apply_margin", tc_apply_margin)
     try:
         with redirect_stdout(buffer):
             yield buffer
     finally:
         setattr(module, "write", old_write)
+        setattr(screen, "apply_margin", old_screen_apply_margin)
+        setattr(module, "apply_margin", old_apply_margin)
         setattr(screen, "divider", old_divider)
+        setattr(text_blocks, "apply_margin", old_text_apply_margin)
 
 
-def two_panels(left_panel: list[str], right_panel: list[str], *, gap: int = 0) -> None:
+def two_panels(left: io.StringIO, right: io.StringIO, *, gap: int = constants.GAP) -> None:
     panel_width = constants.TC_WIDTH
+    left_panel = left.getvalue().splitlines()
+    right_panel = right.getvalue().splitlines()
 
     for left_text, right_text in zip_longest(left_panel, right_panel, fillvalue=""):
         row = left_text.ljust(panel_width) + (" " * gap) + right_text
@@ -115,6 +132,11 @@ def text(message: str, *, justify: str = "left") -> None:
     """Generic freeform prose — the fallback component for anything
     that isn't a semantic widget (banner, menu, list)."""
     write(message, justify=justify)
+
+
+def notify(message: str) -> None:
+    text(message)
+    time.sleep(constants.PAUSE_SHORT)
 
 
 def banner(header: str, *, width: int = screen.WIDTH, clear: bool = False) -> None:
@@ -145,6 +167,7 @@ def banner_figlet(header: str, width: int = screen.WIDTH) -> None:
 def options_menu(options: list[str], footer: str | None = None) -> None:
     lines = ["Options:"] + [f"  ({i}) {opt}" for i, opt in enumerate(options, 1)]
     if footer:
+        lines.append("")
         lines.append(footer)
     write("\n".join(lines), wrap=False)
 
@@ -204,8 +227,23 @@ def enumerated_list(
     if not values:
         text(empty_message)
         return
-    labels = [f"[{chr(ord('A') + i) if letters else i}]" for i in range(start, start + len(values))]
+    labels = [f"[{chr(ord('A') + i - 1) if letters else i}]" for i in range(start, start + len(values))]
     label_block(labels, values, overflow=overflow)
+
+
+# ===== TQDM =====
+
+DEFAULT_BAR_FORMAT = (
+    " " * constants.CENTER_MARGIN +
+    "{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s "
+    "[{elapsed} elapsed, ~{remaining} left]"
+)
+
+
+def app_tqdm(*args, **kwargs):
+    kwargs.setdefault("ncols", constants.WIDTH + constants.CENTER_MARGIN)
+    kwargs.setdefault("bar_format", DEFAULT_BAR_FORMAT)
+    return _tqdm(*args, **kwargs)
 
 
 # ===== PROGRESS DISPLAY =====

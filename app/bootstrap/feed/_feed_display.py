@@ -53,7 +53,7 @@ def _render_feed_list(pager: Pager) -> None:
     feeds, start = pager.get_page_items()
     feed_names = [feed.name for feed in feeds]
     
-    widgets.enumerated_list(start + 1, feed_names, empty_message="No feeds configured.")
+    widgets.enumerated_list(start + 1, feed_names, empty_message="No feeds configured.", letters=False)
     widgets.blank()
     if pager.max_page > 1:
         widgets.text(f"Page {pager.page}/{pager.max_page}")
@@ -73,6 +73,9 @@ def _render_feed_cache_section(feed_cache: FeedCache) -> None:
     labels_and_values = []
 
     for field in fields(feed_cache):
+        if field.name not in FEED_CACHE_VALUE_TRANSFORMS:
+            continue  # e.g. 'name' — internal cache key, not a displayed field
+
         raw_value = data[field.name]
         string_value = FEED_CACHE_VALUE_TRANSFORMS[field.name](raw_value)
 

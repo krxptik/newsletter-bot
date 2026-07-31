@@ -3,13 +3,12 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum, auto
 
-from tqdm import tqdm
-
 from path_config import ENRICH_PROMPTS_DIR
 from models import Article
 from shared.ai_utils import safe_prompt
 from shared.ai_client import AIClient
 from shared.exceptions import InsufficientQuotaError
+from shared.ui import widgets
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +98,7 @@ def process_articles(
             halt.set()
         return (article, result)
 
-    with tqdm(total=len(articles), desc="AI Processing", unit="article",
-              bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]") as pbar:
+    with widgets.app_tqdm(total=len(articles), desc="AI Processing", unit="article") as pbar:
         with ThreadPoolExecutor(max_workers=BATCH_SIZE) as executor:
             futures = {executor.submit(process_one, article): article for article in articles}
             for future in as_completed(futures):

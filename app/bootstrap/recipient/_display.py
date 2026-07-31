@@ -13,14 +13,6 @@ def group_headers(groups: list[Group]) -> list:
     ]
 
 
-def form_ungrouped(book: AddressBook) -> tuple[list, list]:
-    labels, values = [], []
-    for n, addr in enumerate(book.ungrouped, book.no_of_groups + 1):
-        labels.append(f"[{n}]")
-        values.append(addr)
-    return labels, values
-
-
 def display_groups(book: AddressBook, *, clear=False) -> None:
     if clear:
         screen.clear()
@@ -30,20 +22,12 @@ def display_groups(book: AddressBook, *, clear=False) -> None:
     widgets.blank()
 
 
-def display_ungrouped(book: AddressBook, clear=False) -> None:
+def display_address_book(book: AddressBook, options: list | None = None, clear: bool = True) -> None:
     if clear:
         screen.clear()
-    widgets.section_header("UNGROUPED")
-    widgets.blank()
-    widgets.label_block(*form_ungrouped(book), empty_message="(none)")
-    widgets.blank()
-
-
-def display_address_book(book: AddressBook, options: list) -> None:
-    screen.clear()
     display_groups(book)
-    display_ungrouped(book)
     screen.divider()
     widgets.blank()
-    widgets.options_menu(options)
-    widgets.blank()
+    if options:
+        widgets.options_menu(options)
+        widgets.blank()

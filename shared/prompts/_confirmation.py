@@ -1,6 +1,4 @@
-import time
-
-from shared.ui import widgets, PAUSE_SHORT
+from shared.ui import widgets
 
 
 def confirmation(prompt: str) -> bool:
@@ -14,5 +12,5 @@ def confirmation(prompt: str) -> bool:
         if response == "N":
             return False
 
-        widgets.text("ERROR: Please enter Y or N")
-        time.sleep(PAUSE_SHORT)
+        widgets.notify("ERROR: Please enter Y or N")
+        widgets.blank()

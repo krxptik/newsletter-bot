@@ -85,43 +85,56 @@ AI USAGE
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import requests
 import feedparser
-from tqdm import tqdm
 
-from ._constants import FEEDPARSER_FAIL_COUNT
+from ._constants import FEEDPARSER_FAIL_COUNT, FEED_WORKERS
 from ._rss_entry_parser import entry_to_article
 from ._site_scraper import discover_and_scrape
+from ._session_pool import get_session
 
 from models import Feed, FeedCache, Article
 from shared.ai_client import AIClient
+from shared.ui import widgets
 
 logger = logging.getLogger(__name__)
 
 
 def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Article]:
-    """Parse all feeds and return a flat list of recent Article objects."""
+    """Parse all feeds concurrently and return a flat list of recent Article objects."""
     logger.info(f"parse_all: parsing {len(feeds)} feeds")
 
-    with requests.Session() as session:
-        articles = []
-        for feed_obj, cache in tqdm(
-            feeds,
-            desc="Feed parsing",
-            unit="feed",
-            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n}/{total} {unit}s [{elapsed} elapsed, ~{remaining} left]"
-        ):
-            result = _parse_feed(feed_obj, cache, session, client)
-            if result:
-                articles.extend(result)
-            cache.mark_parsed(success=(result is not None))
+    articles: list[Article] = []
+    with ThreadPoolExecutor(max_workers=FEED_WORKERS) as executor:
+        futures = {
+            executor.submit(_parse_feed_safe, feed_obj, cache, client): (feed_obj, cache)
+            for feed_obj, cache in feeds
+        }
 
-        logger.info(f"{len(articles)} total articles across {len(feeds)} feeds")
-        return articles
+        with widgets.app_tqdm(total=len(feeds), desc="Feed parsing", unit="feed") as pbar:
+            for future in as_completed(futures):
+                feed_obj, cache = futures[future]
+                result = future.result()
+                if result:
+                    articles.extend(result)
+                cache.mark_parsed(success=(result is not None))
+                pbar.update(1)
+
+    logger.info(f"{len(articles)} total articles across {len(feeds)} feeds")
+    return articles
 
 
-def _parse_feed(feed_obj: Feed, cache: FeedCache, session: requests.Session, client: AIClient) -> list[Article] | None:
+def _parse_feed_safe(feed_obj: Feed, cache: FeedCache, client: AIClient) -> list[Article] | None:
+    """Isolate one feed's failure from the rest of the pool."""
+    try:
+        return _parse_feed(feed_obj, cache, get_session(), client)
+    except Exception:
+        logger.exception(f"parse_all: unhandled error on '{feed_obj.name}'")
+        return None
+
+
+def _parse_feed(feed_obj: Feed, cache: FeedCache, session, client: AIClient) -> list[Article] | None:
     """Top-level entry point. Derives mode, dispatches, updates cache."""
     if not (feed_obj.feed_url and cache.trust_feed_url):
         return discover_and_scrape(feed_obj, session, client)
@@ -131,19 +144,18 @@ def _parse_feed(feed_obj: Feed, cache: FeedCache, session: requests.Session, cli
         return _parse_feedparser_entries(feed.entries, feed_obj, session, client)
 
     if not feed.bozo:
-        return []  # legitimately empty feed — not a failure
+        return []
 
     if feed_obj.site_url is None:
         logger.error(f"{feed_obj.name}: feed broken, no site_url to recover with")
-        cache.trust_feed_url = False  # demote for future runs
+        cache.trust_feed_url = False
         return None
 
-    cache.trust_feed_url = False  # demote for future runs
+    cache.trust_feed_url = False
     return discover_and_scrape(feed_obj, session, client)
 
 
-def _parse_feedparser_entries(entries, feed_obj: Feed, session: requests.Session, client: AIClient) -> list[Article] | None:
-    """Parse feedparser entries and fall back to scraping if needed."""
+def _parse_feedparser_entries(entries, feed_obj: Feed, session, client: AIClient) -> list[Article] | None:
     fail_count = 0
     articles = []
     for entry in entries:

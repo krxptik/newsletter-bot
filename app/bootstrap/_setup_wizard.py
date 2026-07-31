@@ -36,7 +36,7 @@ def run_setup_wizard(config: Config) -> None:
         "",
         "IMPORTANT NOTES:",
         "  • Double-check all entries during setup.",
-        "  • Configuration can be changed at any time in the settings menu",
+        "  • Configuration can be changed at any time in the settings menu.",
     ])
     widgets.text(message)
     widgets.blank()

@@ -4,7 +4,10 @@ import logging
 import re
 from typing import Any
 
+from bs4 import BeautifulSoup
+
 from path_config import INGEST_PROMPTS_DIR
+from ._constants import AI_STRIP_TAGS, MAX_HTML_CHARS
 from ._extraction_utils import parse_date
 from shared.ai_client import AIClient
 from shared.ai_utils import safe_prompt
@@ -44,6 +47,23 @@ def ai_extract(html: str, need_title: bool, need_date: bool, need_text: bool, cl
     return result
 
 
+def _trim_html(html: str, max_chars: int = MAX_HTML_CHARS) -> str:
+    """Strip low-value tags (scripts, nav, footer, etc.) and cap length
+    before the HTML goes anywhere near an AI prompt — this is the single
+    biggest lever on per-call token cost, since raw page HTML is mostly
+    boilerplate the model doesn't need to find a title/date/body."""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(AI_STRIP_TAGS):
+        tag.decompose()
+
+    trimmed = str(soup)
+    if len(trimmed) > max_chars:
+        trimmed = trimmed[:max_chars]
+        logger.debug(f"_trim_html: truncated to {max_chars} chars")
+
+    return trimmed
+
+
 def _build_prompt(html: str, need_title: bool, need_date: bool, need_text: bool) -> str:
     with open(PROMPT_FILE, "r", encoding="utf-8") as handle:
         template = handle.read()
@@ -52,7 +72,7 @@ def _build_prompt(html: str, need_title: bool, need_date: bool, need_text: bool)
         "yes" if need_title else "no",
         "yes" if need_date else "no",
         "yes" if need_text else "no",
-        html.strip(),
+        _trim_html(html).strip(),
     )
 
 

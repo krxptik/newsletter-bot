@@ -1,13 +1,13 @@
 import time
 import logging
 
-from ._handlers import move_article, view_article
-from ._display import display_confirm, display_selection_menu
+from ._handlers import move_article, view_article, confirm_selected
+from ._display import display_all_articles, display_options
 from ._constants import ARTICLES_PER_PAGE
 
 from models import Article
 from shared.ui import widgets, PAUSE_SHORT
-from shared.prompts import confirmation, select_with_pagination, PaginationSelectResult, Navigation
+from shared.prompts import select_with_pagination, PaginationSelectResult, Navigation
 from shared.pager import Pager
 
 logger = logging.getLogger(__name__)
@@ -23,14 +23,10 @@ def _handle_user_input(
 
     if user_input.navigation is not None:
         match user_input.secondary, user_input.navigation:
-            case False, Navigation.NEXT:
-                available.next_page()
-            case False, Navigation.PREV:
-                available.prev_page()
-            case True, Navigation.NEXT:
-                selected.next_page()
-            case False, Navigation.PREV:
-                selected.prev_page()
+            case False, Navigation.NEXT: available.next_page()
+            case False, Navigation.PREV: available.prev_page()
+            case True, Navigation.NEXT: selected.next_page()
+            case False, Navigation.PREV: selected.prev_page()
         return False
 
     match user_input.item_index:
@@ -40,16 +36,14 @@ def _handle_user_input(
                 widgets.text("Article was added to the newsletter.")
                 time.sleep(PAUSE_SHORT)
         case 1:
-            success = move_article(selected, available, prompt="Enter article letter")
+            success = move_article(selected, available, prompt="Enter article letter", letters=True)
             if success:
-                widgets.text("Article was added to the newsletter.")
+                widgets.text("Article was renmoved from the newsletter.")
                 time.sleep(PAUSE_SHORT)
         case 2:
             view_article(available, selected)
         case 3:
-            display_confirm(selected)
-            if confirmation("Generate newsletter with these articles?"):
-                logger.info("Selected articles confirmed")
+            if confirm_selected(selected):
                 return True
     return False
 
@@ -68,7 +62,8 @@ def run_selection_menu(articles: list[Article]) -> list[Article]:
     ]
 
     while True:
-        display_selection_menu(available, selected, options)
+        display_all_articles(available, selected)
+        display_options(options)
 
         user_input = select_with_pagination(options, secondary=True)
         should_exit = _handle_user_input(user_input, available, selected)

@@ -6,7 +6,7 @@ from .feed import run_feed_manager
 from .recipient import run_recipient_manager
 from .sender import run_sender_settings
 
-from app.persistence import refresh_dynamic_flags, save_config
+from app.persistence import refresh_dynamic_flags
 from models.config import Config
 from shared.ui import widgets, screen
 from shared.prompts import select
@@ -44,31 +44,19 @@ def _display_menu(title: str, options: list[str], config: Config | None = None) 
 
 def _handle_main_input(option: int | None) -> State | None:
     match option:
-        case 0:
-            logger.info("User selected Start")
-            return None
-        case 1:
-            logger.info("User entered Settings")
-            return State.SETTINGS
-        case 2:
-            logger.info("User selected Exit")
-            raise UserExitError("Exited from main menu.")
+        case 0: return None
+        case 1: return State.SETTINGS
+        case 2: raise UserExitError("Exited from main menu.")
     return State.MAIN
 
 
 def _handle_settings_input(option: int | None) -> State:
     match option:
-        case 0:
-            run_ai_settings()
-        case 1:
-            run_sender_settings()
-        case 2:
-            run_feed_manager()
-        case 3:
-            run_recipient_manager()
-            
-        case 4:
-            return State.MAIN
+        case 0: run_ai_settings()
+        case 1: run_sender_settings()
+        case 2: run_feed_manager()
+        case 3: run_recipient_manager()
+        case 4: return State.MAIN
     return State.SETTINGS
 
 

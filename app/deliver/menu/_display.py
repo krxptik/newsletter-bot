@@ -1,39 +1,29 @@
-from email.message import EmailMessage
+from typing import TYPE_CHECKING
 
+from ._draft import EmailDraft
 from shared.ui import screen, widgets
 
+if TYPE_CHECKING:
+    from ._recipient import RecipientType
 
-def display_address_book(groups: dict, ungrouped: list) -> None:
-    print("Address book:")
-    if groups:
-        for name, members in groups.items():
-            print(f"  [{name}] - {len(members)} member(s)")
-            for member in members:
-                print(f"    - {member}")
-    else:
-        print("  (no groups)")
-
-    if ungrouped:
-        print("\n  Ungrouped:")
-        for addr in ungrouped:
-            print(f"    - {addr}")
-    else:
-        print("  (no ungrouped recipients)")
-
-    screen.divider()
-
-
-def display_details(em: EmailMessage) -> None:
-    widgets.banner("EMAIL DETAILS", clear=True)
+def display_details(draft: EmailDraft) -> None:
+    screen.clear()
+    widgets.section_header("EMAIL DETAILS")
     widgets.blank()
     widgets.label_block(
         ["Subject:", "From:", "To:", "Cc:", "Bcc:"],
-        [
-            str(em.get("Subject")),
-            str(em.get("From")),
-            str(em.get("To")),
-            str(em.get("Cc")),
-            str(em.get("Bcc")),
-        ],
+        [draft.subject, draft.from_, ", ".join(draft.to), ", ".join(draft.cc), ", ".join(draft.bcc)]
     )
+    widgets.blank()
+    screen.divider()
+
+
+def display_recipient_detail(draft: EmailDraft, recipient_type: RecipientType) -> None:
+    labels = [f"{recipient_type.value.title()}:"]
+    values = [", ".join(getattr(draft, recipient_type.value))]
+    screen.clear()
+    widgets.section_header(f"MANAGING '{recipient_type.value.title()}'")
+    widgets.blank()
+    widgets.label_block(labels, values if values[0] else ["No recipients set."])
+    widgets.blank()
     screen.divider()

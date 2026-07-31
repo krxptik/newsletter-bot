@@ -30,7 +30,5 @@ def view_group_members(name: str, members: list[str]) -> None:
             return
 
         match raw.strip().upper():
-            case "N":
-                pager.next_page()
-            case "P":
-                pager.prev_page()
+            case "N": pager.next_page()
+            case "P": pager.prev_page()
