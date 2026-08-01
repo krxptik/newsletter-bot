@@ -35,7 +35,7 @@ def setup_logging(log_to_file: bool = True) -> None:
 
     logging.basicConfig(level="DEBUG", handlers=handlers)
 
-    for lib in ("urllib3", "requests", "feedparser", "google"):
+    for lib in ("urllib3", "requests", "feedparser", "google", "trafilatura", "httpcore", "httpx"):
         logging.getLogger(lib).setLevel(logging.WARNING)
 
     logging.getLogger(__name__).info("Logging initialised")

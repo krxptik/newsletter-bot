@@ -48,10 +48,6 @@ class AIClient:
         logger.info(f"Requests used: {self.request_count}/{self.rpd}")
 
 
-GEMINI_LIMITS = {
-    'gemini-2.5-flash': {'rpm': 5, 'tpm': 250000, 'rpd': 20}
-}
-
 GEMMA_LIMITS = {
     # tpm confirmed from live 429 payload:
     # "Quota exceeded for metric: ...generate_content_free_tier_input_token_count

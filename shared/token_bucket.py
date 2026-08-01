@@ -2,6 +2,13 @@ import threading
 import time
 from collections import deque
 
+# ===== FINE TUNING =====
+
+CHARS_PER_TOKEN = 3
+TOKEN_BUDGET_FACTOR = 0.7
+
+
+# ===== TPM CLASS =====
 
 class TPMLimiter:
     """Thread-safe rolling-window rate limiter for tokens-per-minute quotas.
@@ -29,7 +36,7 @@ class TPMLimiter:
         """Block until `tokens` fit in the current window, then reserve them."""
         # A single request that alone exceeds the limit would block forever —
         # let it through and let the API itself accept or reject it.
-        tokens = min(tokens, self._limit)
+        tokens = int(min(tokens, self._limit) * TOKEN_BUDGET_FACTOR)
 
         while True:
             with self._lock:
@@ -51,4 +58,4 @@ def estimate_tokens(text: str) -> int:
     """Rough token estimate (~4 chars/token for English text). Good enough
     for rate-limiting purposes — we only need to stay under the ceiling,
     not match the provider's tokenizer exactly."""
-    return max(1, len(text) // 4)
+    return max(1, len(text) // CHARS_PER_TOKEN)
