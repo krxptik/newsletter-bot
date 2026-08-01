@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TYPE_CHECKING
 
 import requests
 
@@ -8,10 +8,14 @@ from bs4 import BeautifulSoup
 
 from ._extraction_utils import parse_date, normalise_trafilatura_result, enrich_extraction_with_ai, is_truncated
 from ._ai_fallback import ai_extract
+from ._fallback_stats import record_attempt
 
-from models import Feed, Article
+from models import Article
 from shared.safe_request import safe_get
-from shared.ai_client import AIClient
+
+if TYPE_CHECKING:
+    from models import Feed
+    from shared.ai_client import AIClient
 
 
 class EntryFields(NamedTuple):
@@ -28,12 +32,14 @@ class ExtractionResult(NamedTuple):
     response: requests.Response | None
 
 
-def entry_to_article(entry: dict[str, Any], feed_obj: Feed, session: requests.Session, client: AIClient) -> Article | None:
+def entry_to_article(entry: dict[str, Any], feed_obj: "Feed", session: requests.Session, client: "AIClient") -> Article | None:
     """Build one Article from a feed entry, using Trafilatura and AI only as fallback."""
     title, link, pub_date, content = _get_entry_core_fields(entry)
 
     if not link:
         return None
+    
+    record_attempt(link)
 
     need_title = not bool(title and str(title).strip())
     need_date = pub_date is None
@@ -53,6 +59,7 @@ def entry_to_article(entry: dict[str, Any], feed_obj: Feed, session: requests.Se
                 content,
                 client,
                 ai_extract,
+                url=link
             )
 
     if not (title and link and content):

@@ -93,6 +93,8 @@ from ._constants import FEEDPARSER_FAIL_COUNT, FEED_WORKERS
 from ._rss_entry_parser import entry_to_article
 from ._site_scraper import discover_and_scrape
 from ._session_pool import get_session
+from ._fallback_stats import log_summary, reset
+
 
 from models import Feed, FeedCache, Article
 from shared.ai_client import AIClient
@@ -105,6 +107,7 @@ def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Art
     """Parse all feeds concurrently and return a flat list of recent Article objects."""
     logger.info(f"parse_all: parsing {len(feeds)} feeds")
 
+    reset()
     articles: list[Article] = []
     with ThreadPoolExecutor(max_workers=FEED_WORKERS) as executor:
         futures = {
@@ -122,6 +125,7 @@ def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Art
                 pbar.update(1)
 
     logger.info(f"{len(articles)} total articles across {len(feeds)} feeds")
+    log_summary()
     return articles
 
 

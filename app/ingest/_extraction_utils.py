@@ -3,6 +3,7 @@ from typing import Any, Callable
 
 from trafilatura.settings import Document
 
+from ._fallback_stats import record_fallback
 from ._constants import TRUNCATION_MARKERS, MIN_CONTENT_LENGTH
 
 from shared.ai_client import AIClient
@@ -65,12 +66,15 @@ def enrich_extraction_with_ai(
     content: str | None,
     client: AIClient,
     ai_extract: Callable[[str, bool, bool, bool, AIClient], dict | None],
+    url: str | None = None,
 ) -> tuple[str | None, str | None, datetime | None]:
     need_title = not bool(title and str(title).strip())
     need_date = pub_date is None
     need_text = content is None or is_truncated(content)
 
     if need_title or need_date or need_text:
+        if url:
+            record_fallback(url, need_title, need_date, need_text)
         ai_result = ai_extract(html, need_title, need_date, need_text, client)
         if ai_result:
             content = ai_result.get("text") or content

@@ -9,6 +9,7 @@ from ._ai_fallback import ai_extract
 from ._concurrency import domain_semaphore
 from ._session_pool import get_session
 from ._constants import SCRAPE_WORKERS
+from ._fallback_stats import record_attempt
 
 from models import Feed, Article
 from shared.safe_request import safe_get
@@ -40,6 +41,7 @@ def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: AICli
 
 
 def _article_from_link(link: str, feed_obj: Feed, client: AIClient) -> Article | None:
+    record_attempt(link)
     with domain_semaphore(link):
         resp = safe_get(link, get_session())
 
@@ -60,6 +62,7 @@ def _article_from_link(link: str, feed_obj: Feed, client: AIClient) -> Article |
         extracted_text,
         client,
         ai_extract,
+        url=link
     )
 
     if not (extracted_text and extracted_title and extracted_date):
