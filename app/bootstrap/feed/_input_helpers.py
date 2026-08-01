@@ -2,13 +2,12 @@ import time
 
 import requests
 
-from ._url_tools import is_valid_url_format, normalise_url
-
 from models import Feed
 from shared.prompts import ask, select_item, SelectionResult
 from shared.ui import widgets, PAUSE_SHORT
 from shared.safe_request import safe_get
 from shared.pager import Pager
+from shared.url_utils import is_valid_url_format, normalise_url
 
 
 # ===== add_feed INPUT =====
