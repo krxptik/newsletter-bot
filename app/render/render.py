@@ -2,7 +2,10 @@ import os
 import webbrowser
 from datetime import datetime
 from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from mjml import mjml2html
+
 from path_config import TEMPLATES_DIR, OUTPUT_DIR
 
 
@@ -15,11 +18,9 @@ def render_newsletter(context: dict) -> str:
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(['html', 'xml'])
     )
-
-    template = env.get_template('index.html')
-    html = template.render(context)
-
-    return html
+    template = env.get_template('index.mjml')
+    mjml_source = template.render(context)   # Jinja fills in {{title}}, {% for %}, etc. first
+    return mjml2html(mjml_source)       # then MJML compiles the result to email-safe HTML
 
 
 def save_newsletter(html: str, title: str) -> Path:

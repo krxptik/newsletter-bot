@@ -1,0 +1,78 @@
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-all font-family="Roboto, Helvetica, Arial, sans-serif" />
+    </mj-attributes>
+  </mj-head>
+
+  <mj-body background-color="#E6E6EA">
+    <mj-wrapper background-color="#ffffff" padding="0">
+
+      <!-- TOP STRIPE -->
+      <mj-section padding="0">
+        <mj-column width="33.33%"><mj-spacer height="8px" container-background-color="#FE5D5D" /></mj-column>
+        <mj-column width="33.34%"><mj-spacer height="8px" container-background-color="#005A8F" /></mj-column>
+        <mj-column width="33.33%"><mj-spacer height="8px" container-background-color="#FED65D" /></mj-column>
+      </mj-section>
+
+      <!-- DATE / TITLE / SUMMARY -->
+      <mj-section padding="40px 40px 0">
+        <mj-column>
+          <mj-text align="center" color="#888888">{{date}}</mj-text>
+          <mj-text align="center" font-size="30px" font-weight="bold">{{title}}</mj-text>
+          <mj-text align="center">{{summary}}</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <mj-section padding="20px">
+        <mj-column>
+          <mj-divider border-color="#dddddd" border-width="1px" />
+        </mj-column>
+      </mj-section>
+
+      <!-- ARTICLE LOOP (templating layer, not MJML itself) -->
+      {% for row in article_rows %}
+      <mj-section padding="20px 40px 0">
+        <mj-column>
+          <mj-text font-weight="bold" font-size="16px">{{row.title}}</mj-text>
+          <mj-text align="justify" font-size="16px">{{row.summary}}</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <mj-section padding="20px 40px">
+        <mj-column width="60%" vertical-align="middle">
+          <mj-text font-size="14px" color="#888888" font-weight="bold">
+            Source: {{row.source}}
+          </mj-text>
+        </mj-column>
+        <mj-column width="40%" vertical-align="middle">
+          <mj-button background-color="#FED65D" color="#000000" border-radius="5px" href="{{row.link}}">
+            View
+          </mj-button>
+        </mj-column>
+      </mj-section>
+
+      <mj-section padding="20px">
+        <mj-column>
+          <mj-divider border-color="#dddddd" border-width="1px" />
+        </mj-column>
+      </mj-section>
+      {% endfor %}
+
+      <!-- FOOTER -->
+      <mj-section padding="0 0 20px">
+        <mj-column>
+          <mj-text align="center" color="#888888" font-size="12px">ACJC ELL Department</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- BOTTOM STRIPE -->
+      <mj-section padding="0">
+        <mj-column width="33%"><mj-spacer height="8px" container-background-color="#FE5D5D" /></mj-column>
+        <mj-column width="34%"><mj-spacer height="8px" container-background-color="#005A8F" /></mj-column>
+        <mj-column width="33%"><mj-spacer height="8px" container-background-color="#FED65D" /></mj-column>
+      </mj-section>
+
+    </mj-wrapper>
+  </mj-body>
+</mjml>
