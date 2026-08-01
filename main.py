@@ -3,6 +3,7 @@ import logging
 
 # Third-party
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 # Local — shared utilities
 from shared.logging import setup_logging
@@ -21,6 +22,7 @@ from app.filter import filter_articles
 from app.enrich import process_articles, generate_newsletter_metadata
 from app.selection import run_selection_menu
 from app.compose import generate_context
+from app.edit import run_markdown_edit
 from app.render import render_newsletter, save_newsletter, preview_newsletter
 from app.deliver import send_menu, send_email
 
@@ -44,6 +46,7 @@ def main():
         widgets.banner_figlet("ellie!")
 
         # --- Ingest ---
+        tqdm.set_lock(tqdm.get_lock())
         feeds, caches = load_feeds_with_caches()
         matched = match_feeds_to_caches(feeds, caches)
         logger.info(f"Loaded {len(feeds)} feeds")
@@ -54,7 +57,7 @@ def main():
         articles = filter_articles(articles, ai_client, 1)
         logger.info(f"After pruning: {len(articles)} articles remain")
 
-        # --- AI processing ---
+        # --- Article AI enrichment ---
         logger.info("Starting AI summarisation and tagging...")
         enriched_articles = process_articles(ai_client, articles)
         logger.info(f"AI processing complete: {len(enriched_articles)} articles enriched")
@@ -64,7 +67,7 @@ def main():
         selected_articles = run_selection_menu(enriched_articles)
         logger.info(f"User selected {len(selected_articles)} articles")
 
-        # --- Newsletter generation ---
+        # --- Newsletter detail generation with AI ---
         widgets.banner_figlet("ellie!")
         logger.info("Generating newsletter title and summary...")
         title, summary = widgets.run_with_spinner(
@@ -75,9 +78,14 @@ def main():
         )
         logger.info(f"Newsletter title: '{title}'")
 
-        logger.info("Rendering newsletter HTML...")
+        # --- Newsletter editing interface ---
+        logger.info("Opening newsletter editing interface...")
         context = generate_context(title, summary, selected_articles)
-        html = render_newsletter(context)
+        modified_context = run_markdown_edit(context)
+
+        # --- Newsletter rendering ---
+        logger.info("Rendering newsletter HTML...")
+        html = render_newsletter(modified_context)
         path = save_newsletter(html, title)
         logger.info(f"Newsletter saved to: {path}")
 
