@@ -43,7 +43,6 @@ def capture_panel():
         stack.enter_context(_patched(module, "write", tc_write))
         stack.enter_context(_patched(screen, "divider", tc_divider))
         stack.enter_context(_patched(screen, "apply_margin", tc_apply_margin))
-        stack.enter_context(_patched(module, "apply_margin", tc_apply_margin))
         stack.enter_context(_patched(text_blocks, "apply_margin", tc_apply_margin))
         stack.enter_context(_patched(constants, "CONTENT_WIDTH", constants.TC_CONTENT_WIDTH))
         with redirect_stdout(buffer):

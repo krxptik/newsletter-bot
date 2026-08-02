@@ -6,7 +6,6 @@ import requests
 from ._feed_display import render_remove_section, display_feed_data
 from ._feed_resolution import resolve_feed_urls
 from ._input_helpers import input_url, input_name, input_feed_selection
-
 from app.persistence import save_feeds, save_feed_caches, get_or_create_cache, remove_feed_cache
 from models import Feed, FeedCache
 from shared.ui import screen, widgets, PAUSE_SHORT
@@ -24,8 +23,7 @@ def remove_feed(pager: Pager, feeds: list[Feed], feed_caches: list[FeedCache]) -
     if not feeds:
         logger.warning("No feeds available to remove")
         widgets.blank()
-        widgets.text("WARNING: No feeds to remove.")
-        time.sleep(PAUSE_SHORT)
+        widgets.notify("WARNING: No feeds to remove.")
         return
 
     render_remove_section(pager)
@@ -36,8 +34,7 @@ def remove_feed(pager: Pager, feeds: list[Feed], feed_caches: list[FeedCache]) -
 
     if not confirmation(f"Remove '{feed_to_remove.name}'?"):
         logger.info(f"User cancelled removal of '{feed_to_remove.name}'")
-        widgets.text("Removal cancelled.")
-        time.sleep(PAUSE_SHORT)
+        widgets.notify("Removal cancelled.")
         return
 
     feeds.remove(feed_to_remove)
@@ -45,8 +42,7 @@ def remove_feed(pager: Pager, feeds: list[Feed], feed_caches: list[FeedCache]) -
     save_feeds(feeds)
     save_feed_caches(feed_caches)
     logger.info(f"Feed removed: '{feed_to_remove.name}' ({feed_to_remove.site_url}, {feed_to_remove.feed_url})")
-    widgets.text(f"Feed removed: '{feed_to_remove.name}'")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Feed removed: '{feed_to_remove.name}'")
 
 
 # ===== ADD FEED =====
@@ -60,8 +56,7 @@ def _is_duplicate(site_url, feed_url, name, feeds) -> bool:
     )
     if duplicate:
         widgets.blank()
-        widgets.text("ERROR: A feed with that URL or name already exists.")
-        time.sleep(PAUSE_SHORT)
+        widgets.notify("ERROR: A feed with that URL or name already exists.")
     return duplicate
 
 
@@ -107,8 +102,7 @@ def add_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
 
     if not confirmation("Add this feed?"):
         logger.info(f"User declined to add feed: {feed.name}")
-        widgets.text("Add feed cancelled.")
-        time.sleep(PAUSE_SHORT)
+        widgets.notify("Add feed cancelled.")
         return
 
     feeds.append(feed)
@@ -117,8 +111,7 @@ def add_feed(feeds: list[Feed], feed_caches: list[FeedCache]) -> None:
     save_feed_caches(feed_caches)
 
     logger.info(f"Feed added: '{feed.name}' ({feed.site_url}, {feed.feed_url})")
-    widgets.text(f"Feed added: '{feed.name}'")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Feed added: '{feed.name}'")
 
 
 # ===== VIEW FEED =====

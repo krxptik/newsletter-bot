@@ -11,25 +11,25 @@ from shared.prompts import confirmation
 logger = logging.getLogger(__name__)
     
 
-def move_article(from_pager: Pager, to_pager: Pager, prompt: str, letters: bool = False) -> bool:
+def move_article(from_pager: Pager, to_pager: Pager, prompt: str, letters: bool = False, add: bool = True) -> None:
     if from_pager.is_empty:
         logger.warning("No articles to select from.")
         widgets.blank()
-        widgets.text("WARNING: No articles to select from.")
-        time.sleep(PAUSE_SHORT)
-        return False
+        widgets.notify("WARNING: No articles to select from.")
+        return
 
     display_article_list(from_pager, letters=letters)
 
     selected_article = input_article_selection(from_pager, prompt=prompt, letters=letters)
     if selected_article is None:
-        return False
+        return
 
     from_pager.items.remove(selected_article)
     to_pager.items.append(selected_article)
     from_pager.page = min(from_pager.page, to_pager.max_page)
     logger.info(f"Article moved: {selected_article.title}")
-    return True
+    widgets.notify(f"Article was {'added to' if add else 'removed from'} the newsletter.")
+    return
 
 
 def view_article(available: Pager, selected: Pager):
@@ -53,5 +53,4 @@ def confirm_selected(selected: Pager) -> bool:
     if not confirmation("Generate newsletter with these articles?"):
         return False
     
-    logger.info("Selected articles confirmed")
     return True

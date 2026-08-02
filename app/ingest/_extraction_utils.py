@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 from trafilatura.settings import Document
 
 from ._fallback_stats import record_fallback
 from ._constants import TRUNCATION_MARKERS, MIN_CONTENT_LENGTH
 
-from shared.ai_client import AIClient
+if TYPE_CHECKING:
+    from shared.ai_client import AIClient
 
 
 def parse_date(raw_date: Any) -> datetime | None:
@@ -64,8 +65,8 @@ def enrich_extraction_with_ai(
     title: str | None,
     pub_date: datetime | None,
     content: str | None,
-    client: AIClient,
-    ai_extract: Callable[[str, bool, bool, bool, AIClient], dict | None],
+    client: "AIClient",
+    ai_extract: Callable[[str, bool, bool, bool, "AIClient"], dict | None],
     url: str | None = None,
 ) -> tuple[str | None, str | None, datetime | None]:
     need_title = not bool(title and str(title).strip())

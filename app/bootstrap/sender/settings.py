@@ -11,22 +11,6 @@ from shared.prompts import select
 logger = logging.getLogger(__name__)
 
 
-def _edit_sender_details(env_vars: dict) -> None:
-    if prompt_and_save_sender_details(env_vars, cancel_word="back"):
-        time.sleep(PAUSE_SHORT)
-
-
-def _handle_user_input(user_input: int | None, env_vars: dict) -> bool:
-    match user_input:
-        case 0:
-            _edit_sender_details(env_vars)
-            env_vars = read_env()
-        case 1:
-            logger.info("Sender settings closed")
-            return True
-    return False
-
-
 def run_sender_settings() -> None:
     logger.info("Sender settings opened")
     env_vars = read_env()
@@ -42,4 +26,21 @@ def run_sender_settings() -> None:
         should_exit = _handle_user_input(user_input, env_vars)
 
         if should_exit:
-            return
+            break
+
+    logger.info("Sender settings closed")
+
+        
+def _edit_sender_details(env_vars: dict) -> dict:
+    if prompt_and_save_sender_details(env_vars, cancel_word="back"):
+        time.sleep(PAUSE_SHORT)
+    return read_env()
+
+
+def _handle_user_input(user_input: int | None, env_vars: dict) -> bool:
+    match user_input:
+        case 0: env_vars = _edit_sender_details(env_vars)
+        case 1: return True
+    return False
+
+

@@ -2,22 +2,24 @@ from json import JSONDecodeError
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 
 from path_config import INGEST_PROMPTS_DIR
 from ._constants import AI_STRIP_TAGS, MAX_HTML_CHARS
 from ._extraction_utils import parse_date
-from shared.ai_client import AIClient
 from shared.ai_utils import safe_prompt
+
+if TYPE_CHECKING:
+    from shared.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
 PROMPT_FILE = INGEST_PROMPTS_DIR / "ai_fallback_prompt.txt"
 
 
-def ai_extract(html: str, need_title: bool, need_date: bool, need_text: bool, client: AIClient) -> dict | None:
+def ai_extract(html: str, need_title: bool, need_date: bool, need_text: bool, client: "AIClient") -> dict | None:
     """Single AI fallback function, parameterized by what's missing."""
     if not (need_title or need_date or need_text):
         return None

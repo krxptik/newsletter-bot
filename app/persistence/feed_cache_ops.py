@@ -1,4 +1,5 @@
 import logging
+
 from models import Feed, FeedCache
 
 logger = logging.getLogger(__name__)

@@ -26,6 +26,25 @@ MENU_OPTIONS = {
 }
 
 
+def run_main_menu(config: Config) -> None:
+    logger.info("Main menu opened")
+    state = State.MAIN
+
+    while state is not None:
+        options = MENU_OPTIONS[state]
+        if state == State.MAIN:
+            refresh_dynamic_flags(config)
+            _display_menu("ellie!", options, config)
+            widgets.blank()
+            state = _handle_main_input(select(options))
+        else:
+            _display_menu("SETTINGS", options)
+            widgets.blank()
+            state = _handle_settings_input(select(options))
+
+    logger.info("Main menu exited — continuing to program")
+
+    
 def _display_menu(title: str, options: list[str], config: Config | None = None) -> None:
     if config is None:
         widgets.banner(title, clear=True)
@@ -33,7 +52,7 @@ def _display_menu(title: str, options: list[str], config: Config | None = None) 
         widgets.options_menu(options)
         return
 
-    widgets.banner_figlet(title)
+    widgets.banner_figlet()
     widgets.blank()
     widgets.dot_leader_list(config.display_data())
     widgets.blank()
@@ -60,20 +79,3 @@ def _handle_settings_input(option: int | None) -> State:
     return State.SETTINGS
 
 
-def run_main_menu(config: Config) -> None:
-    logger.info("Main menu opened")
-    state = State.MAIN
-
-    while state is not None:
-        options = MENU_OPTIONS[state]
-        if state == State.MAIN:
-            refresh_dynamic_flags(config)
-            _display_menu("ellie!", options, config)
-            widgets.blank()
-            state = _handle_main_input(select(options))
-        else:
-            _display_menu("SETTINGS", options)
-            widgets.blank()
-            state = _handle_settings_input(select(options))
-
-    logger.info("Main menu exited — continuing to program")

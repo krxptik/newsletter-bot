@@ -12,35 +12,6 @@ from shared.pager import Pager
 logger = logging.getLogger(__name__)
 
 
-def _handle_user_input(
-        user_input: PaginationSelectResult | None,
-        pager: Pager, 
-        feeds: list[Feed],
-        feed_caches: list[FeedCache]
-    ) -> bool:
-    if user_input is None:
-        return False
-
-    if user_input.navigation is not None:
-        match user_input.navigation:
-            case Navigation.NEXT: pager.next_page()
-            case Navigation.PREV: pager.prev_page()
-        return False
-
-    match user_input.item_index:
-        case 0:
-            add_feed(feeds, feed_caches)
-        case 1:
-            remove_feed(pager, feeds, feed_caches)
-        case 2:
-            view_feed(pager, feed_caches)
-        case 3:
-            if confirmation("Confirm feeds?"):
-                logger.info("Feeds confirmed")
-                return True
-    return False
-
-
 def run_feed_manager() -> None:
     logger.info("Running feed manager")
     feeds, feed_caches = load_feeds_with_caches()
@@ -62,3 +33,26 @@ def run_feed_manager() -> None:
             break
 
     logger.info("Feed manager exited")
+
+    
+def _handle_user_input(
+        user_input: PaginationSelectResult | None,
+        pager: Pager, 
+        feeds: list[Feed],
+        feed_caches: list[FeedCache]
+    ) -> bool:
+    if user_input is None:
+        return False
+
+    if user_input.navigation is not None:
+        match user_input.navigation:
+            case Navigation.NEXT: pager.next_page()
+            case Navigation.PREV: pager.prev_page()
+        return False
+
+    match user_input.item_index:
+        case 0: add_feed(feeds, feed_caches)
+        case 1: remove_feed(pager, feeds, feed_caches)
+        case 2: view_feed(pager, feed_caches)
+        case 3: return confirmation("Confirm feeds?")
+    return False

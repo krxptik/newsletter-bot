@@ -33,7 +33,7 @@ def _handle_user_input(option: int | None, book: AddressBook) -> bool:
         case 0: _flow(add_group, book)
         case 1: _flow(remove_group, book)
         case 2: _flow(handle_view_members, book)
-        case 3: return _exit_manager()
+        case 3: return True
     return False
 
 
@@ -42,8 +42,3 @@ def _flow(handler_fn, book: AddressBook) -> None:
     screen.divider()
     widgets.blank()
     handler_fn(book)
-
-
-def _exit_manager() -> bool:
-    logger.info("Recipient manager exited")
-    return True

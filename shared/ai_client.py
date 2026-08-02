@@ -1,7 +1,5 @@
 from google import genai
 import logging
-
-from app.persistence import retrieve_ai_usage, increment_ai_usage
 from shared.token_bucket import TPMLimiter, estimate_tokens
 
 logger = logging.getLogger(__name__)
@@ -15,6 +13,8 @@ class AIClient:
     """Base class for AI clients."""
 
     def __init__(self, model: str, rpd: int, tpm: int | None = None):
+        from app.persistence.ai_usage_store import retrieve_ai_usage
+
         self.model = model
         self.rpd = rpd
         self.tpm = tpm
@@ -44,6 +44,8 @@ class AIClient:
         logger.debug(f"TPM throttle: reserved ~{tokens} tokens")
 
     def _post_request(self):
+        from app.persistence.ai_usage_store import increment_ai_usage
+
         self.request_count = increment_ai_usage(self.model)
         logger.info(f"Requests used: {self.request_count}/{self.rpd}")
 

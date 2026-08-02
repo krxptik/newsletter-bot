@@ -30,21 +30,10 @@ def _handle_user_input(
         return False
 
     match user_input.item_index:
-        case 0:
-            success = move_article(available, selected, prompt="Enter article number")
-            if success:
-                widgets.text("Article was added to the newsletter.")
-                time.sleep(PAUSE_SHORT)
-        case 1:
-            success = move_article(selected, available, prompt="Enter article letter", letters=True)
-            if success:
-                widgets.text("Article was renmoved from the newsletter.")
-                time.sleep(PAUSE_SHORT)
-        case 2:
-            view_article(available, selected)
-        case 3:
-            if confirm_selected(selected):
-                return True
+        case 0: move_article(available, selected, prompt="Enter article number")
+        case 1: move_article(selected, available, prompt="Enter article letter", letters=True)
+        case 2: view_article(available, selected)
+        case 3: return confirm_selected(selected)
     return False
 
 

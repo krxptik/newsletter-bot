@@ -3,6 +3,7 @@ email_validator==2.3.0
 feedparser==6.0.12
 Jinja2==3.1.6
 mjml==0.12.0
+google-genai
 protobuf==7.35.1
 pyfiglet==1.0.4
 python-dotenv==1.2.2

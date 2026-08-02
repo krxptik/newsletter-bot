@@ -26,7 +26,7 @@ def banner(header: str, *, width: int = screen.WIDTH, clear: bool = False) -> No
     screen.divider(width)
 
 
-def banner_figlet(header: str, width: int = screen.WIDTH) -> None:
+def banner_figlet(header: str = "ellie!", width: int = screen.WIDTH) -> None:
     # local import: avoid pyfiglet cost for callers that never use figlet banners
     import pyfiglet
     from version import __version__

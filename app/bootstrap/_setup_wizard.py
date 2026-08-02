@@ -23,7 +23,7 @@ def run_setup_wizard(config: Config) -> None:
     widgets.banner("SETUP WIZARD", clear=True)
     widgets.blank()
     message = "\n".join([
-        "Before you begin, please ensure you have the following:",
+        "Before you begin with the setup, please ensure you have the following:",
         "  • A Google AI Studio API key",
         "  • An email app password",
         "  • An email address to send newsletters from",
@@ -45,8 +45,7 @@ def run_setup_wizard(config: Config) -> None:
 
     # --- AI Setup ---
     logger.info(f"AI setup starting in {PAUSE_SHORT}s")
-    widgets.text(f"Loading AI setup in {PAUSE_SHORT} seconds...")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Loading AI setup in {PAUSE_SHORT} seconds...")
 
     env_vars = run_ai_setup(env_vars)
     write_env(env_vars)
@@ -60,8 +59,7 @@ def run_setup_wizard(config: Config) -> None:
 
     # --- Sender Setup ---
     logger.info(f"Sender setup starting in {PAUSE_SHORT}s")
-    widgets.text(f"Loading sender setup in {PAUSE_SHORT} seconds...")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Loading sender setup in {PAUSE_SHORT} seconds...")
 
     env_vars = run_sender_setup(env_vars)
     write_env(env_vars)
@@ -75,8 +73,7 @@ def run_setup_wizard(config: Config) -> None:
 
     # --- Feed Setup ---
     logger.info(f"Feed setup starting in {PAUSE_SHORT}s")
-    widgets.text(f"Loading feed setup in {PAUSE_SHORT} seconds...")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Loading feed setup in {PAUSE_SHORT} seconds...")
 
     run_feed_manager()
     logger.info("Feed setup complete")
@@ -87,8 +84,7 @@ def run_setup_wizard(config: Config) -> None:
 
     # --- Recipient Setup ---
     logger.info(f"Recipient setup starting in {PAUSE_SHORT}s")
-    widgets.text(f"Loading recipient setup in {PAUSE_SHORT} seconds...")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify(f"Loading recipient setup in {PAUSE_SHORT} seconds...")
 
     run_recipient_manager()
     logger.info("Recipient setup complete")
@@ -97,6 +93,5 @@ def run_setup_wizard(config: Config) -> None:
     widgets.blank()
     widgets.text("Recipient setup completed.")
     widgets.blank()
-    widgets.text("Setup complete!")
-    time.sleep(PAUSE_SHORT)
+    widgets.notify("Setup complete!")
     logger.info("Setup wizard finished")

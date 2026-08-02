@@ -1,9 +1,13 @@
 import time
 import logging
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
-from shared.ai_client import AIClient, AIClientError
+from shared.ai_client import AIClientError
 from shared.google_errors import index_error_details
+
+if TYPE_CHECKING:
+    from shared.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +62,7 @@ def _handle_client_error(e: AIClientError, attempt: int) -> bool:
 
 
 def safe_prompt(
-    client: AIClient,
+    client: "AIClient",
     prompt: str,
     max_attempts: int = 5
 ) -> tuple[bool, str | None]:
