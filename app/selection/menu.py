@@ -1,4 +1,3 @@
-import time
 import logging
 
 from ._handlers import move_article, view_article, confirm_selected
@@ -6,7 +5,6 @@ from ._display import display_all_articles, display_options
 from ._constants import ARTICLES_PER_PAGE
 
 from models import Article
-from shared.ui import widgets, PAUSE_SHORT
 from shared.prompts import select_with_pagination, PaginationSelectResult, Navigation
 from shared.pager import Pager
 
