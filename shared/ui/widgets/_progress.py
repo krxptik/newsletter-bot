@@ -22,15 +22,23 @@ def run_with_spinner(message: str, func, *args, **kwargs):
     import time
 
     stop_event = threading.Event()
+    spinner_margin = " " * constants.CENTER_MARGIN
 
     def _spinner():
         for char in itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
             if stop_event.is_set():
                 break
-            sys.stdout.write(f"\r  {char}  {message}")
+            line = f"{spinner_margin}  {char}  {message}"
+            sys.stdout.write("\r" + line)
             sys.stdout.flush()
-            time.sleep(0.1)
-        sys.stdout.write("\r" + " " * (len(message) + 6) + "\r")
+            time.sleep(constants.SPINNER_INTERVAL_SECONDS)
+        clear_width = (
+            len(spinner_margin)
+            + len(message)
+            + constants.SPINNER_DECORATION_WIDTH
+            + constants.SPINNER_CLEAR_PADDING
+        )
+        sys.stdout.write("\r" + " " * clear_width + "\r")
 
     t = threading.Thread(target=_spinner)
     t.start()
