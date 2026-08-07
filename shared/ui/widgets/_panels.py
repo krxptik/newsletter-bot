@@ -1,9 +1,8 @@
 import io
-import sys
 from contextlib import contextmanager, redirect_stdout, ExitStack
 from itertools import zip_longest
 
-from ._gateway import write
+from . import _gateway
 from .. import constants, screen
 from ..text import _blocks as text_blocks
 
@@ -21,12 +20,12 @@ def _patched(obj, name, new_value):
 
 @contextmanager
 def capture_panel():
-    module = sys.modules[__name__]
     buffer = io.StringIO()
 
-    orig_write = module.write
+    orig_write = _gateway.write
+    orig_apply_margin = _gateway.apply_margin
     orig_divider = screen.divider
-    orig_apply_margin = screen.apply_margin
+    orig_screen_apply_margin = screen.apply_margin
 
     def tc_write(text: str = "", **kwargs):
         kwargs["width"] = constants.TC_CONTENT_WIDTH
@@ -36,15 +35,24 @@ def capture_panel():
     def tc_divider(width: int = constants.TC_WIDTH):
         return orig_divider(width, constants.TC_CENTER_MARGIN)
 
-    def tc_apply_margin(text: str, margin: int = constants.TC_CENTER_MARGIN):
+    def tc_gateway_apply_margin(text: str, margin: int = constants.TC_CENTER_MARGIN):
         return orig_apply_margin(text, margin)
 
+    def tc_screen_apply_margin(text: str, margin: int = constants.TC_CENTER_MARGIN):
+        return orig_screen_apply_margin(text, margin)
+
     with ExitStack() as stack:
-        stack.enter_context(_patched(module, "write", tc_write))
+        # _gateway.write / _gateway.apply_margin: reached by every widget in
+        # _semantic.py, since they all call `_gateway.write(...)` directly.
+        stack.enter_context(_patched(_gateway, "write", tc_write))
+        stack.enter_context(_patched(_gateway, "apply_margin", tc_gateway_apply_margin))
+        # screen.divider / screen.apply_margin: screen.py owns its own
+        # apply_margin binding (imported from ..text), used inside divider().
         stack.enter_context(_patched(screen, "divider", tc_divider))
-        stack.enter_context(_patched(screen, "apply_margin", tc_apply_margin))
-        stack.enter_context(_patched(text_blocks, "apply_margin", tc_apply_margin))
-        stack.enter_context(_patched(constants, "CONTENT_WIDTH", constants.TC_CONTENT_WIDTH))
+        stack.enter_context(_patched(screen, "apply_margin", tc_screen_apply_margin))
+        # text_blocks.apply_margin: used internally by format_block() for the
+        # per-line margin, called from _gateway.write() via format_block().
+        stack.enter_context(_patched(text_blocks, "apply_margin", tc_gateway_apply_margin))
         with redirect_stdout(buffer):
             yield buffer
 
@@ -54,4 +62,4 @@ def two_panels(left: io.StringIO, right: io.StringIO, *, gap: int = constants.GA
     for left_text, right_text in zip_longest(
         left.getvalue().splitlines(), right.getvalue().splitlines(), fillvalue=""
     ):
-        write(left_text.ljust(panel_width) + " " * gap + right_text, wrap=False, margin=False)
+        _gateway.write(left_text.ljust(panel_width) + " " * gap + right_text, wrap=False, margin=False)
