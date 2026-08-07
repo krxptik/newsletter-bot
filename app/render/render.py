@@ -8,6 +8,8 @@ from mjml import mjml2html
 
 from path_config import TEMPLATES_DIR, OUTPUT_DIR
 
+ALLOWED_CHARACTERS = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM "
+
 
 def preview_newsletter(path: Path) -> None:
     webbrowser.open_new_tab(f"file://{os.path.abspath(path)}")
@@ -25,7 +27,8 @@ def render_newsletter(context: dict) -> str:
 
 def save_newsletter(html: str, title: str) -> Path:
     date = datetime.now().strftime('%d%m%Y')
-    filename = date + '_' + title.lower().replace(' ', '_')
+    filetitle = "".join(c for c in title if c in ALLOWED_CHARACTERS).replace(" ", "_")
+    filename = date + '_' + filetitle
     path = OUTPUT_DIR / filename
 
     with open(path, 'w', encoding='utf-8') as f:
