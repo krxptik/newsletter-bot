@@ -1,6 +1,6 @@
 import re
 
-from shared.url_utils import is_valid_url_format
+from shared.core import is_valid_url_format
 
 _HEADER_RE = re.compile(r'^(#{1,2})(?!#)(?:\s+(.*))?$')
 

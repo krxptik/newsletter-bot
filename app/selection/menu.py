@@ -6,7 +6,7 @@ from ._constants import ARTICLES_PER_PAGE
 
 from models import Article
 from shared.prompts import select_with_pagination, PaginationSelectResult, Navigation
-from shared.pager import Pager
+from shared.core import Pager
 
 logger = logging.getLogger(__name__)
 

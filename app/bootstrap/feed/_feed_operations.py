@@ -1,5 +1,4 @@
 import logging
-import time
 
 import requests
 
@@ -8,9 +7,9 @@ from ._feed_resolution import resolve_feed_urls
 from ._input_helpers import input_url, input_name, input_feed_selection
 from app.persistence import save_feeds, save_feed_caches, get_or_create_cache, remove_feed_cache
 from models import Feed, FeedCache
-from shared.ui import screen, widgets, PAUSE_SHORT
+from shared.ui import screen, widgets
 from shared.prompts import confirmation
-from shared.pager import Pager
+from shared.core import Pager
 
 logger = logging.getLogger(__name__)
 

@@ -97,7 +97,7 @@ from ._fallback_stats import log_summary, reset
 
 
 from models import Feed, FeedCache, Article
-from shared.ai_client import AIClient
+from shared.ai import AIClient
 from shared.ui import widgets
 
 logger = logging.getLogger(__name__)

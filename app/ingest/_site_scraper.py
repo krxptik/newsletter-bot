@@ -13,10 +13,10 @@ from ._constants import SCRAPE_WORKERS
 from ._fallback_stats import record_attempt
 from ._url_filter import junk_filtered_links
 from models import Feed, Article
-from shared.safe_request import safe_get
+from shared.net import safe_get
 
 if TYPE_CHECKING:
-    from shared.ai_client import AIClient
+    from shared.ai import AIClient
 
 
 def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: "AIClient") -> list[Article]:

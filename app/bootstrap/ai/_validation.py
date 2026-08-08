@@ -4,7 +4,7 @@ from enum import Enum, auto
 from google import genai
 from google.genai.errors import ClientError, ServerError
 
-from shared.google_errors import index_error_details
+from shared.ai import index_error_details
 
 logger = logging.getLogger(__name__)
 

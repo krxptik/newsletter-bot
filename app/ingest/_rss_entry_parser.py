@@ -11,11 +11,11 @@ from ._ai_fallback import ai_extract
 from ._fallback_stats import record_attempt
 
 from models import Article
-from shared.safe_request import safe_get
+from shared.net import safe_get
 
 if TYPE_CHECKING:
     from models import Feed
-    from shared.ai_client import AIClient
+    from shared.ai import AIClient
 
 
 class EntryFields(NamedTuple):

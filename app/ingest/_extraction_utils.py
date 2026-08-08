@@ -7,7 +7,7 @@ from ._fallback_stats import record_fallback
 from ._constants import TRUNCATION_MARKERS, MIN_CONTENT_LENGTH
 
 if TYPE_CHECKING:
-    from shared.ai_client import AIClient
+    from shared.ai import AIClient
 
 
 def parse_date(raw_date: Any) -> datetime | None:

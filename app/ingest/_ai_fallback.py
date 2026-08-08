@@ -9,10 +9,10 @@ from bs4 import BeautifulSoup
 from path_config import INGEST_PROMPTS_DIR
 from ._constants import AI_STRIP_TAGS, MAX_HTML_CHARS
 from ._extraction_utils import parse_date
-from shared.ai_utils import safe_prompt
+from shared.ai import safe_prompt
 
 if TYPE_CHECKING:
-    from shared.ai_client import AIClient
+    from shared.ai import AIClient
 
 logger = logging.getLogger(__name__)
 

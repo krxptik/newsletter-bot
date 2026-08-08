@@ -1,6 +1,6 @@
 from email.message import EmailMessage
 
-from shared.email import is_valid_email
+from shared.core import is_valid_email
 from shared.prompts import ask
 from shared.ui import widgets
 from models import AddressBook

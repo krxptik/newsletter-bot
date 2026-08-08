@@ -3,11 +3,11 @@ import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
-from shared.ai_client import AIClientError
-from shared.google_errors import index_error_details
+from .ai_client import AIClientError
+from .google_errors import index_error_details
 
 if TYPE_CHECKING:
-    from shared.ai_client import AIClient
+    from .ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 

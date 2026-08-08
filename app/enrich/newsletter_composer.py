@@ -3,8 +3,7 @@ import logging
 from path_config import ENRICH_PROMPTS_DIR
 from .article_enricher import AIParsingError
 from models import Article
-from shared.ai_utils import safe_prompt
-from shared.ai_client import AIClient
+from shared.ai import safe_prompt, AIClient
 
 
 logger = logging.getLogger(__name__)

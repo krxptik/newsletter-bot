@@ -4,10 +4,9 @@ from ._members import view_group_members
 
 from app.persistence import save_address_book
 from models import AddressBook
-from shared.email import is_valid_email
+from shared.core import is_valid_email, prompt_group
 from shared.ui import widgets
 from shared.prompts import ask, confirmation
-from shared.recipient_utils import prompt_group
 
 logger = logging.getLogger(__name__)
 

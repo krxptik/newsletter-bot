@@ -1,7 +1,7 @@
 from models import Article
 from shared.ui import widgets
 from shared.prompts import select_item, SelectionResult
-from shared.pager import Pager
+from shared.core import Pager
 
 
 def input_article_selection(

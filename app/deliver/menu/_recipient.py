@@ -6,8 +6,7 @@ from app.bootstrap.recipient import display_address_book
 from models import AddressBook
 from shared.ui import widgets
 from shared.prompts import ask
-from shared.email import is_valid_email
-from shared.recipient_utils import prompt_group
+from shared.core import is_valid_email, prompt_group
 
 
 class RecipientType(Enum):

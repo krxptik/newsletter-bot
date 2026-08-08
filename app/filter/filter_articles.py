@@ -1,15 +1,18 @@
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.persistence import load_used_urls
 from models import Article
-from shared.ai_client import AIClient
 from shared.exceptions import InsufficientQuotaError
+
+if TYPE_CHECKING:
+    from shared.ai import AIClient
 
 logger = logging.getLogger(__name__)
 
 
-def _retrieve_article_limit(client: AIClient, metadata_requests: int = 1) -> int:
+def _retrieve_article_limit(client: "AIClient", metadata_requests: int = 1) -> int:
     """Calculate how many articles can be processed given remaining AI quota."""
     remaining = client.remaining_requests()
     logger.debug(f"Remaining AI requests today: {remaining}")
@@ -24,7 +27,7 @@ def _retrieve_article_limit(client: AIClient, metadata_requests: int = 1) -> int
     return limit
 
 
-def filter_articles(articles: list[Article], client: AIClient, metadata_requests: int = 1) -> list[Article]:
+def filter_articles(articles: list[Article], client: "AIClient", metadata_requests: int = 1) -> list[Article]:
     """Remove already-used articles and cap the list at max_articles."""
     max_articles = _retrieve_article_limit(client, metadata_requests=metadata_requests)
     used_urls = load_used_urls()

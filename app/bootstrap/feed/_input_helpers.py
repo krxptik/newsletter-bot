@@ -3,9 +3,8 @@ import requests
 from models import Feed
 from shared.prompts import ask, select_item, SelectionResult
 from shared.ui import widgets
-from shared.safe_request import safe_get
-from shared.pager import Pager
-from shared.url_utils import is_valid_url_format, normalise_url
+from shared.net import safe_get
+from shared.core import Pager, is_valid_url_format, normalise_url
 
 
 # ===== add_feed INPUT =====

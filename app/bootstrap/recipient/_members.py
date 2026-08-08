@@ -1,4 +1,4 @@
-from shared.pager import Pager
+from shared.core import Pager
 from shared.ui import screen, widgets
 from shared.prompts import ask
 

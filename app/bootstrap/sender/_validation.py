@@ -1,7 +1,7 @@
 import logging
 import smtplib
 
-from shared.email import is_valid_email
+from shared.core import is_valid_email
 
 logger = logging.getLogger(__name__)
 

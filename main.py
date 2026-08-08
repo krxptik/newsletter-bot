@@ -9,7 +9,7 @@ from tqdm import tqdm
 from shared.logging import setup_logging
 from shared.ui import widgets
 from shared.exceptions import UserExitError, InsufficientQuotaError, InternetConnectionError
-from shared.ai_client import GemmaClient # current model
+from shared.ai import GemmaClient # current model
 
 # Local — version
 from version import __version__

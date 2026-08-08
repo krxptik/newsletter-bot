@@ -7,7 +7,7 @@ from ._feed_operations import add_feed, remove_feed, view_feed
 from app.persistence import load_feeds_with_caches
 from models import Feed, FeedCache
 from shared.prompts import select_with_pagination, confirmation, PaginationSelectResult, Navigation
-from shared.pager import Pager
+from shared.core import Pager
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import Any, NamedTuple, TypeVar, overload
 
 from ._ask import ask
-from shared.pager import Pager
+from shared.core import Pager
 
 
 PrimaryItem = TypeVar("PrimaryItem")

@@ -1,6 +1,6 @@
 from models import Article
 from shared.ui import widgets, screen
-from shared.pager import Pager
+from shared.core import Pager
 
 
 def _list_info(pager: Pager):

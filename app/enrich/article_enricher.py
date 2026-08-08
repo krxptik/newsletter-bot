@@ -5,8 +5,7 @@ from enum import Enum, auto
 
 from path_config import ENRICH_PROMPTS_DIR
 from models import Article
-from shared.ai_utils import safe_prompt
-from shared.ai_client import AIClient
+from shared.ai import safe_prompt, AIClient
 from shared.exceptions import InsufficientQuotaError
 from shared.ui import widgets
 

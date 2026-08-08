@@ -1,11 +1,10 @@
 import logging
-import time
 
 from ._display import display_article_details, display_article_list, display_all_articles, display_confirm
 from ._input_helpers import input_article_selection
 
-from shared.pager import Pager
-from shared.ui import widgets, PAUSE_SHORT
+from shared.core import Pager
+from shared.ui import widgets
 from shared.prompts import confirmation
 
 logger = logging.getLogger(__name__)

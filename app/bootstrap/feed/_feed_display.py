@@ -2,7 +2,7 @@ from dataclasses import asdict, fields
 from datetime import datetime
 
 from models import Feed, FeedCache
-from shared.pager import Pager
+from shared.core import Pager
 from shared.ui import widgets, screen
 
 FEED_FIELD_LABELS = {

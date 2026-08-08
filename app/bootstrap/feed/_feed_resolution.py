@@ -5,8 +5,8 @@ import requests
 import feedparser
 from bs4 import BeautifulSoup
 
-from shared.url_utils import is_valid_url_format
-from shared.safe_request import safe_get
+from shared.core import is_valid_url_format
+from shared.net import safe_get
 
 COMMON_FEED_PATHS = [
     "/feed",
