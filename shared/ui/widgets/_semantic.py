@@ -3,6 +3,7 @@ import time
 from . import _gateway
 from .. import constants, screen
 from ..text import wrap_text, dot_leader_line, label_line, tree_lines
+from ..render_context import RenderOptions, current_render
 
 
 def text(message: str, *, justify: str = "left") -> None:
@@ -19,11 +20,13 @@ def notify(message: str) -> None:
 def banner(header: str, *, width: int = screen.WIDTH, clear: bool = False) -> None:
     if clear:
         screen.clear()
-    screen.divider(width)
+    render = current_render()
+    banner_render = RenderOptions(width=width, content_width=render.content_width, center_margin=render.center_margin)
+    screen.divider(render=banner_render)
     _gateway.blank()
     _gateway.write(wrap_text(header, width, justify="center"), wrap=False, margin=False)
     _gateway.blank()
-    screen.divider(width)
+    screen.divider(render=banner_render)
 
 
 def banner_figlet(header: str = "ellie!", width: int = screen.WIDTH) -> None:
@@ -32,13 +35,15 @@ def banner_figlet(header: str = "ellie!", width: int = screen.WIDTH) -> None:
     from version import __version__
 
     screen.clear()
-    screen.divider(width)
+    render = current_render()
+    banner_render = RenderOptions(width=width, content_width=render.content_width, center_margin=render.center_margin)
+    screen.divider(render=banner_render)
     _gateway.blank()
     figlet = pyfiglet.figlet_format(header, font="dos_rebel", justify="center", width=width)
     _gateway.write(figlet, wrap=False, margin=False)
     text(f"Running {__version__}.", justify="center")
     _gateway.blank()
-    screen.divider(width)
+    screen.divider(render=banner_render)
 
 
 def options_menu(options: list[str], footer: str | None = None) -> None:
@@ -53,7 +58,9 @@ def dot_leader_list(rows: list[tuple[str, str]], empty_message: str = "Nothing t
     if not rows:
         text(empty_message)
         return
-    lines = [dot_leader_line(left, right, constants.CONTENT_WIDTH) for left, right in rows]
+    render = current_render()
+    w = render.resolve(render.content_width, constants.CONTENT_WIDTH)
+    lines = [dot_leader_line(left, right, w) for left, right in rows]
     _gateway.write("\n".join(lines), wrap=False)
 
 
@@ -88,10 +95,12 @@ def label_block(
         text(empty_message)
         return
     label_width = max(len(str(label)) for label in labels)
-    lines = [label_line(label, value, constants.CONTENT_WIDTH,
+    render = current_render()
+    w = render.resolve(render.content_width, constants.CONTENT_WIDTH)
+    lines = [label_line(label, value, w,
                         sep=sep, label_width=label_width, overflow=overflow)
              for label, value in zip(labels, values)]
-    _gateway.write("\n".join(lines), overflow=overflow)
+    _gateway.write("\n".join(lines))
 
 
 def enumerated_list(

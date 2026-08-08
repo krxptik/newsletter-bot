@@ -1,42 +1,32 @@
 from .. import constants
 from ..text import format_block, apply_margin
+from ..render_context import RenderOptions, current_render
 
 
 def write(
-        text: str = "", *, 
-        wrap: bool = True, 
+        text: str = "", *,
+        wrap: bool = True,
         margin: bool = True, justify: str = "left", end: str = "\n",
-        width: int = constants.CONTENT_WIDTH, center_margin: int = constants.CENTER_MARGIN,
+        render: RenderOptions | None = None,
         overflow: str | None = None) -> None:
+
+    render = render or current_render()
+    width = render.resolve(render.content_width, constants.CONTENT_WIDTH)
+    center_margin = render.resolve(render.center_margin, constants.CENTER_MARGIN)
 
     render_margin = constants.MARGIN if margin else 0
 
-    if overflow == "truncate":
-        text = format_block(
-            text,
-            width=width,
-            wrap=False,
-            truncate_lines=True,
-            justify=justify,
-            margin=render_margin,
-        )
-    elif overflow == "wrap":
-        text = format_block(
-            text,
-            width=width,
-            wrap=True,
-            truncate_lines=False,
-            justify=justify,
-            margin=render_margin,
-        )
-    elif wrap or margin:
-        text = format_block(
-            text,
-            width=width,
-            wrap=wrap,
-            justify=justify,
-            margin=render_margin
-        )
+    truncate = overflow == "truncate"
+    wrap_arg = False if truncate else wrap
+
+    text = format_block(
+        text,
+        width=width,
+        wrap=wrap_arg,
+        truncate_lines=truncate,
+        justify=justify,
+        margin=render_margin,
+    )
 
     if center_margin:
         text = apply_margin(text, center_margin)
