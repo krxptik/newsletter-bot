@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from ._handlers import move_article, view_article, confirm_selected
 from ._display import display_all_articles, display_options
@@ -8,7 +7,6 @@ from ._constants import ARTICLES_PER_PAGE
 from models import Article
 from shared.prompts import select_with_pagination, PaginationSelectResult, Navigation
 from shared.pager import Pager
-from shared.logging import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,23 +60,3 @@ def run_selection_menu(articles: list[Article]) -> list[Article]:
 
     logger.info("Selection menu exited")
     return selected.items
-
-
-def _manual_demo_articles() -> list[Article]:
-    now = datetime.now()
-    return [
-        Article(title="Alpha articleasdfffffffffffsadf", link="https://example.com/a", pub_date=now),
-        Article(title="Beta article", link="https://example.com/b", pub_date=now),
-        Article(title="Gamma article", link="https://example.com/c", pub_date=now),
-        Article(title="Delta article", link="https://example.com/d", pub_date=now),
-    ]
-
-
-if __name__ == "__main__":
-    setup_logging()
-    selected_articles = run_selection_menu(_manual_demo_articles())
-
-    print()
-    print("Selected articles:")
-    for article in selected_articles:
-        print(f"- {article.title}")
