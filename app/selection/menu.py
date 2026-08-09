@@ -1,6 +1,6 @@
 import logging
 
-from ._handlers import move_article, view_article, confirm_selected
+from ._handlers import move_article, view_article, mark_as_junk, confirm_selected
 from ._display import display_all_articles, display_options
 from ._constants import ARTICLES_PER_PAGE
 
@@ -31,7 +31,8 @@ def _handle_user_input(
         case 0: move_article(available, selected, prompt="Enter article number")
         case 1: move_article(selected, available, prompt="Enter article letter", letters=True)
         case 2: view_article(available, selected)
-        case 3: return confirm_selected(selected)
+        case 3: mark_as_junk(available)
+        case 4: return confirm_selected(selected)
     return False
 
 
@@ -45,6 +46,7 @@ def run_selection_menu(articles: list[Article]) -> list[Article]:
         "Add article to selected", 
         "Remove selected article", 
         "View article details",
+        "Mark as junk (never show again)",
         "Done",
     ]
 

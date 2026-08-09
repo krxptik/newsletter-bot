@@ -10,7 +10,7 @@ DEFAULT_BAR_FORMAT = (
 
 
 def app_tqdm(*args, **kwargs):
-    kwargs.setdefault("ncols", constants.WIDTH + constants.CENTER_MARGIN)
+    kwargs.setdefault("ncols", constants.CONTENT_WIDTH + constants.CENTER_MARGIN)
     kwargs.setdefault("bar_format", DEFAULT_BAR_FORMAT)
     return _tqdm(*args, **kwargs)
 
