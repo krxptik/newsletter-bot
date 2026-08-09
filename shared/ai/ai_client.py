@@ -2,7 +2,7 @@ import logging
 
 from google import genai
 
-from .token_bucket import TPMLimiter, estimate_tokens
+from ._token_bucket import TPMLimiter, estimate_tokens
 
 logger = logging.getLogger(__name__)
 
