@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from shared.ai import AIClient
 
 
-def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: "AIClient") -> list[Article]:
+def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: "AIClient", blocklist: dict[str, list[str]]) -> list[Article]:
     """Heuristic mode AND the RSS-broken-recovery path (same subtree,
     called from two trigger points — do not duplicate this logic)."""
     response = safe_get(feed_obj.site_url, session) if feed_obj.site_url else None
@@ -27,7 +27,7 @@ def discover_and_scrape(feed_obj: Feed, session: requests.Session, client: "AICl
         return []
 
     soup = BeautifulSoup(response.text, "html.parser")
-    candidates = junk_filtered_links(soup, feed_obj.site_url)
+    candidates = junk_filtered_links(soup, feed_obj.site_url, blocklist)
 
     articles: list[Article] = []
     with ThreadPoolExecutor(max_workers=SCRAPE_WORKERS) as executor:

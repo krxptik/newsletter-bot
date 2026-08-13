@@ -2,8 +2,7 @@ import logging
 
 from ._display import display_article_details, display_article_list, display_all_articles, display_confirm
 from ._input_helpers import input_article_selection
-
-from persistence import add_to_blocklist
+from app.persistence import add_to_blocklist
 from shared.core import Pager
 from shared.ui import widgets
 from shared.prompts import confirmation

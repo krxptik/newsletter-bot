@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from typing import cast
 
 from .data_manager import load_file_data, overwrite_file_data
+from shared.core import normalise_path
 from path_config import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ def add_to_blocklist(link: str):
 
     parsed = urlparse(link)
     domain = parsed.hostname.removeprefix("www.") if parsed.hostname else None
-    path = parsed.path or "/"
+    path = normalise_path(parsed.path or "/")
 
     if not domain:
         logger.warning("Skipping blocklist update for invalid link: %s", link)

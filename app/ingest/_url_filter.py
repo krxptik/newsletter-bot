@@ -2,6 +2,8 @@ import re
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin, urlparse
 
+from shared.core import normalise_path
+
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
 
@@ -36,7 +38,7 @@ MIN_SLUG_HYPHENS = 2
 NUMERIC_ID_RE = re.compile(r"\d{4,}")
 
 
-def junk_filtered_links(soup: "BeautifulSoup", base_url: str | None) -> list[str]:
+def junk_filtered_links(soup: "BeautifulSoup", base_url: str | None, blocklist: dict[str, list[str]]) -> list[str]:
     if not base_url:
         return []
 
@@ -58,6 +60,8 @@ def junk_filtered_links(soup: "BeautifulSoup", base_url: str | None) -> list[str
         if _matches_junk_subdomain(domain, base_domain):
             continue
         if any(junk in domain for junk in JUNK_DOMAINS):
+            continue
+        if _matches_domain_blocklist(domain, parsed.path, blocklist):
             continue
         if _has_junk_path_segment(parsed.path):
             continue
@@ -105,3 +109,7 @@ def _looks_like_article(path: str) -> bool:
     if last_segment.count("-") >= MIN_SLUG_HYPHENS:
         return True
     return bool(NUMERIC_ID_RE.search(path))
+
+
+def _matches_domain_blocklist(domain: str, path: str, blocklist: dict[str, list[str]]) -> bool:
+    return normalise_path(path) in blocklist.get(domain, [])

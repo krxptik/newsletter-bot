@@ -56,7 +56,7 @@ GEMMA_LIMITS = {
     # tpm confirmed from live 429 payload:
     # "Quota exceeded for metric: ...generate_content_free_tier_input_token_count
     #  ... quotaValue: '16000'"
-    'gemma-4-31b-it': {'rpm': 15, 'tpm': 16000, 'rpd': 1500}
+    'gemma-4-31b-it': {'rpm': 30, 'tpm': 16000, 'rpd': 14400}
 }
 
 

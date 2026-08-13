@@ -94,8 +94,7 @@ from ._rss_entry_parser import entry_to_article
 from ._site_scraper import discover_and_scrape
 from ._session_pool import get_session
 from ._fallback_stats import log_summary, reset
-
-
+from app.persistence import load_domain_blocklist
 from models import Feed, FeedCache, Article
 from shared.ai import AIClient
 from shared.ui import widgets
@@ -108,16 +107,17 @@ def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Art
     logger.info(f"parse_all: parsing {len(feeds)} feeds")
 
     reset()
+    blocklist = load_domain_blocklist()
     articles: list[Article] = []
     with ThreadPoolExecutor(max_workers=FEED_WORKERS) as executor:
         futures = {
-            executor.submit(_parse_feed_safe, feed_obj, cache, client): (feed_obj, cache)
+            executor.submit(_parse_feed_safe, feed_obj, cache, client, blocklist): (feed_obj, cache)
             for feed_obj, cache in feeds
         }
 
         with widgets.app_tqdm(total=len(feeds), desc="Feed parsing", unit="feed") as pbar:
             for future in as_completed(futures):
-                feed_obj, cache = futures[future]
+                _, cache = futures[future]
                 result = future.result()
                 if result:
                     articles.extend(result)
@@ -129,23 +129,29 @@ def parse_all(feeds: list[tuple[Feed, FeedCache]], client: AIClient) -> list[Art
     return articles
 
 
-def _parse_feed_safe(feed_obj: Feed, cache: FeedCache, client: AIClient) -> list[Article] | None:
+def _parse_feed_safe(
+        feed_obj: Feed, cache: FeedCache, 
+        client: AIClient, blocklist: dict[str, list[str]]
+    ) -> list[Article] | None:
     """Isolate one feed's failure from the rest of the pool."""
     try:
-        return _parse_feed(feed_obj, cache, get_session(), client)
+        return _parse_feed(feed_obj, cache, get_session(), client, blocklist)
     except Exception:
         logger.exception(f"parse_all: unhandled error on '{feed_obj.name}'")
         return None
 
 
-def _parse_feed(feed_obj: Feed, cache: FeedCache, session, client: AIClient) -> list[Article] | None:
+def _parse_feed(
+        feed_obj: Feed, cache: FeedCache, 
+        session, client: AIClient, blocklist: dict[str, list[str]]
+    ) -> list[Article] | None:
     """Top-level entry point. Derives mode, dispatches, updates cache."""
     if not (feed_obj.feed_url and cache.trust_feed_url):
-        return discover_and_scrape(feed_obj, session, client)
+        return discover_and_scrape(feed_obj, session, client, blocklist)
 
     feed = feedparser.parse(feed_obj.feed_url)
     if feed.entries:
-        return _parse_feedparser_entries(feed.entries, feed_obj, session, client)
+        return _parse_feedparser_entries(feed.entries, feed_obj, session, client, blocklist)
 
     if not feed.bozo:
         return []
@@ -156,15 +162,18 @@ def _parse_feed(feed_obj: Feed, cache: FeedCache, session, client: AIClient) -> 
         return None
 
     cache.trust_feed_url = False
-    return discover_and_scrape(feed_obj, session, client)
+    return discover_and_scrape(feed_obj, session, client, blocklist)
 
 
-def _parse_feedparser_entries(entries, feed_obj: Feed, session, client: AIClient) -> list[Article] | None:
+def _parse_feedparser_entries(
+        entries, feed_obj: Feed,
+        session, client: AIClient, blocklist: dict[str, list[str]]
+    ) -> list[Article] | None:
     fail_count = 0
     articles = []
     for entry in entries:
         if fail_count > FEEDPARSER_FAIL_COUNT:
-            return discover_and_scrape(feed_obj, session, client)
+            return discover_and_scrape(feed_obj, session, client, blocklist)
         article = entry_to_article(entry, feed_obj, session, client)
         if article is None:
             fail_count += 1

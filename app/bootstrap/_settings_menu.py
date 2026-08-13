@@ -3,6 +3,7 @@ from enum import Enum, auto
 
 from .ai import run_ai_settings
 from .feed import run_feed_manager
+from .blocklist import run_blocklist_manager
 from .recipient import run_recipient_manager
 from .sender import run_sender_settings
 
@@ -22,7 +23,7 @@ class State(Enum):
 
 MENU_OPTIONS = {
     State.MAIN: ["Start", "Settings", "Exit"],
-    State.SETTINGS: ["AI", "Sender", "Feeds", "Recipients", "Back"],
+    State.SETTINGS: ["AI", "Sender", "Feeds", "Domain Blocklist", "Recipients", "Back"],
 }
 
 
@@ -74,8 +75,9 @@ def _handle_settings_input(option: int | None) -> State:
         case 0: run_ai_settings()
         case 1: run_sender_settings()
         case 2: run_feed_manager()
-        case 3: run_recipient_manager()
-        case 4: return State.MAIN
+        case 3: run_blocklist_manager()
+        case 4: run_recipient_manager()
+        case 5: return State.MAIN
     return State.SETTINGS
 
 

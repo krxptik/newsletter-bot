@@ -34,16 +34,17 @@ class TPMLimiter:
 
     def acquire(self, tokens: int) -> None:
         """Block until `tokens` fit in the current window, then reserve them."""
-        # A single request that alone exceeds the limit would block forever —
-        # let it through and let the API itself accept or reject it.
-        tokens = int(min(tokens, self._limit) * TOKEN_BUDGET_FACTOR)
+        effective_limit = int(self._limit * TOKEN_BUDGET_FACTOR)
+        # A single request that alone exceeds the effective limit would block
+        # forever — cap it and let the API itself accept or reject it.
+        tokens = min(tokens, effective_limit)
 
         while True:
             with self._lock:
                 now = time.monotonic()
                 self._prune(now)
 
-                if self._used + tokens <= self._limit:
+                if self._used + tokens <= effective_limit:
                     self._entries.append((now, tokens))
                     self._used += tokens
                     return
@@ -55,7 +56,7 @@ class TPMLimiter:
 
 
 def estimate_tokens(text: str) -> int:
-    """Rough token estimate (~4 chars/token for English text). Good enough
+    """Rough token estimate (~<CHARS_PER_TOKEN> chars/token for English text). Good enough
     for rate-limiting purposes — we only need to stay under the ceiling,
     not match the provider's tokenizer exactly."""
     return max(1, len(text) // CHARS_PER_TOKEN)

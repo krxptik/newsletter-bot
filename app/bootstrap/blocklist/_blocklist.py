@@ -2,19 +2,19 @@ from shared.core import Pager
 from shared.ui import screen, widgets
 from shared.prompts import ask
 
-MEMBERS_PER_PAGE = 10
+BLOCKLIST_ITEMS_PER_PAGE = 10
 
 
-def view_group_members(name: str, members: list[str]) -> None:
-    """Paginated, read-only browse of a group's members."""
-    pager = Pager(members, per_page=MEMBERS_PER_PAGE)
+def view_domain_blocklist(domain: str, paths: list[str]) -> None:
+    """Paginated, read-only browse of a domain's blocked paths."""
+    pager = Pager(paths, per_page=BLOCKLIST_ITEMS_PER_PAGE)
 
     while True:
-        widgets.banner(f"GROUP: {name}", clear=True)
+        widgets.banner(f"DOMAIN: {domain}", clear=True)
         widgets.blank()
 
         if pager.is_empty:
-            widgets.text("(no members)")
+            widgets.text("(no blocked paths)")
         else:
             page_items, start = pager.get_page_items()
             widgets.enumerated_list(start + 1, page_items)
@@ -27,8 +27,8 @@ def view_group_members(name: str, members: list[str]) -> None:
 
         if pager.max_page <= 1:
             widgets.m_input("Press 'enter' to go back.")
-            return
-        
+            return 
+
         raw = ask("(N) Next page / (P) Previous page", cancel_word="back")
         if raw is None:
             return
